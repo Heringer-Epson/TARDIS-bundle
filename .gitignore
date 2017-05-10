@@ -1,0 +1,8 @@
+# Python codes to not be tracked #
+##################################
+codes/plot_Ti.py
+codes/noise_analysis.py
+codes/input_pars_04eo.py
+codes/plot_scaled_density.py
+INPUT_FILES/*
+OUTPUT_FILES/*
