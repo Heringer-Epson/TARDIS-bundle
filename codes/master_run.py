@@ -12,16 +12,14 @@ OUTPUT SPECTRA.
 import os																
 from shutil import copyfile
 
-version = os.path.basename(__file__).split('_v')[-1].split('.py')[0]
+#module_input = __import__('input_pars_11fe')
+module_input = __import__('input_pars_05bl')
+#module_input = __import__('input_pars_04eo')
+#module_input = __import__('input_pars_fast')
 
-#module_input = __import__('input_pars_11fe_v'+version)
-module_input = __import__('input_pars_05bl_v'+version)
-#module_input = __import__('input_pars_04eo_v'+version)
-#module_input = __import__('input_pars_fast_v'+version)
-
-module_make_yml = __import__('make_yml_v'+version)
-module_run_simulations = __import__('run_simulations_v'+version)
-module_make_structure_files = __import__('make_structure_files_v'+version)
+module_make_yml = __import__('make_yml')
+module_run_simulations = __import__('run_simulations')
+module_make_structure_files = __import__('make_structure_files')
 
 class_input = getattr(module_input,'input_parameters')
 class_make_structure = getattr(module_make_structure_files,'make_structure')
