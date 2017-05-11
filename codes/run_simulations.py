@@ -18,12 +18,10 @@ import tardis
 import matplotlib.pyplot as plt
 
 from tardis.gui import interface
-from tardis.tools.compute_features import analyse_spectra as analyse
-from tardis.tools.compute_features import uncertainty as uncertainty_routine
-import tardis.tools.tardis_kromer_plot as tkp
-import tardis.tools.tardis_minimal_model as tmm
-
-path_data = os.environ["PATH_SNIa_data"]
+from tardis.tardistools.compute_features import analyse_spectra as analyse
+from tardis.tardistools.compute_features import uncertainty as uncertainty_routine
+import tardis.tardistools.tardis_kromer_plot as tkp
+import tardis.tardistools.tardis_minimal_model as tmm
 
 import pandas as pd
 import cPickle

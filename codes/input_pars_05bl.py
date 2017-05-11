@@ -17,7 +17,7 @@ class input_parameters(object):
 
     def __init__(self):		
 
-        self.input_file = __file__.split('/')[-1].split('.py')[0]
+        self.input_file = __file__.split('/')[-1]
         self.subdir = '05bl_tes/'
         self.filename_structure = '05bl_test'
         self.mode = 'sequential'
@@ -70,7 +70,7 @@ class input_parameters(object):
         self.smoothing_window = 21
         self.N_MC_runs = 200#3000
 
-        self.make_kromer = True
+        self.make_kromer = False
         self.convert_luminosity_to_logsolar()
         if self.structure_type == 'file':
             """

@@ -1,2 +1,9 @@
-# FILES TO BE IGNORED #
-#######################
+#Ignore all files in the input folders.
+./INPUT_FILES/DENSITY_FILES/*
+./INPUT_FILES/STRATIFIED_COMPOSITION_FILES/*
+./INPUT_FILES/YML_FILES/*
+
+#Except blank .gitkeep files, necessary to add empty folders to GitHub.
+!/INPUT_FILES/DENSITY_FILES/.gitkeep
+!/INPUT_FILES/STRATIFIED_COMPOSITION_FILES/.gitkeep
+!/INPUT_FILES/YML_FILES/.gitkeep
