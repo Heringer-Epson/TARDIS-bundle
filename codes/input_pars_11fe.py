@@ -17,6 +17,7 @@ class input_parameters(object):
     
     def __init__(self):     
 
+        self.input_file = __file__.split('/')[-1].split('.py')[0]
         self.subdir = '11fe_1xFe_kromer/'
         self.filename_structure = '11fe_1xFe_kromer'      
         self.mode = 'sequential'

@@ -58,8 +58,8 @@ class make_structure(object):
             density_array = rho_of_v(np.asarray(self.velocity_array)
                             .astype(float))
 
-            density_file = './../INPUT_FILES/DENSITY_FILES/'+'density_'
-                           +self.filename_structure+'.dat'   
+            density_file = ('./../INPUT_FILES/DENSITY_FILES/'+'density_'
+                            +self.filename_structure+'.dat')   
             out_density = open(density_file, 'w')
             
             out_density.write(self.time_0 +'  \n')      
@@ -77,8 +77,8 @@ class make_structure(object):
                 print '    DENSITY FILE: '+density_file
     
         elif self.pass_density_as == 'by_hand':
-            density_array = np.asarray(self.density_array_given)
-                                       .astype(float)    
+            density_array = np.asarray(self.density_array_given).astype(
+                                                                  float)    
     
             if isinstance(self.es, str):
                 self.es = [self.es]
@@ -88,18 +88,17 @@ class make_structure(object):
             for e_s in self.es:
                 for m_s in self.ms:
 
-                    velocity_scaling, density_scaling =
-                                     float(e_s)**(-1.5)*float(m_s)**2.5,
-                                     float(e_s)**0.5*float(m_s)**(-1.5)
+                    velocity_scale = float(e_s)**(-1.5)*float(m_s)**2.5
+                    density_scale = float(e_s)**0.5*float(m_s)**(-1.5)
                                      
-                    velocity_array = velocity_scaling*np.array(
+                    velocity_array = velocity_scale*np.array(
                                    self.velocity_array).astype(np.float)
                                    
-                    density_array = density_scaling*density_array
+                    density_array = density_scale*density_array
 
-                    density_file = './../INPUT_FILES/DENSITY_FILES/'
-                                   +'density_'+self.filename_structure
-                                   +'_es:'+e_s+'_ms:'+m_s+'.dat' 
+                    density_file = ('./../INPUT_FILES/DENSITY_FILES/'
+                                    +'density_'+self.filename_structure
+                                    +'_es:'+e_s+'_ms:'+m_s+'.dat') 
                                    
                     out_density = open(density_file, 'w')
                     
@@ -178,9 +177,9 @@ class make_structure(object):
         for t_exp in aux_t_exp:
             abun = copy.deepcopy(self.abun_dict)
             
-            abundance_file = './../INPUT_FILES/STRATIFIED_COMPOSITION\
-            _FILES/'+'abundance_'+self.filename_structure+'_'+t_exp
-            +'_day.dat'
+            abundance_file = ('./../INPUT_FILES/STRATIFIED_COMPOSITION'
+            '_FILES/'+'abundance_'+self.filename_structure+'_'+t_exp
+            +'_day.dat')
             
             out_abundance = open(abundance_file, 'w')
             out_abundance.write('# index Z=1 - Z=30')   
@@ -191,8 +190,8 @@ class make_structure(object):
                 """Compute changes due to decay of Ni and Co."""     
                 Ni_initial = float(abun['Ni'][i])
                             
-                Ni_change, Co_change, Fe_change = 
-                                decay_Ni_Co_Fe(float(t_exp),Ni_initial)
+                Ni_change, Co_change, Fe_change = decay_Ni_Co_Fe(
+                                                float(t_exp),Ni_initial)
                                 
                 abun['Ni'][i] = str(format(float(abun['Ni'][i])
                 + Ni_change, '.4f'))  

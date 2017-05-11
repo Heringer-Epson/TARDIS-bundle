@@ -17,6 +17,7 @@ class input_parameters(object):
 
     def __init__(self):		
 
+        self.input_file = __file__.split('/')[-1].split('.py')[0]
         self.subdir = '05bl_tes/'
         self.filename_structure = '05bl_test'
         self.mode = 'sequential'

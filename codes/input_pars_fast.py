@@ -26,6 +26,7 @@ class input_parameters(object):
 
 
 
+        self.input_file = __file__.split('/')[-1].split('.py')[0]
 		self.subdir														= 'test_kromer/'#'seeds_with_unc_noisier/'
 		self.filename_structure											= '2011fe'
 		self.mode														= 'sequential'
