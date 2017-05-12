@@ -33,9 +33,6 @@ import itertools
 Input Parameters
 ----------
 
-mode            :   sequential (one file per index of the input lists)  | Default sequential
-                    combination (one file per combination of inputs)
-
 log_lum         :   Observed luminosity.                                | Default = 9.44 log L_sun
 time_explosion  :   Time since explosion.                               | Default = 13 days
 distance        :   Distance to the explosion. If (not) set units are:
@@ -109,10 +106,10 @@ Use default parameters.
 
 ########################  CREATE MASTER CLASS  #########################
 
-class make_yml(object):
+class Make_Yml(object):
 
     def __init__(self,
-    mode='sequential', write_files=True,
+    write_files=True,
     log_lum='9.4472', time_explosion='19', distance='0',
     atomic_data='kurucz_cd23_chianti_H_He.h5',
     structure_type='specific', filename_structure='None', velocity_start='1.1e+4', velocity_stop='2.0e+4', velocity_array=None, structure_num='20',
@@ -189,9 +186,7 @@ class make_yml(object):
         self.subdir_safety                                              = subdir_safety
         self.clean_subdir                                               = clean_subdir
         self.verbose                                                    = verbose
-        
-        self.mode                                                       = mode
-        
+                
         #Initializing internal variables
                 
         self.default_pars                                               = []
@@ -229,13 +224,9 @@ class make_yml(object):
         
     def num_of_files_to_make(self):
         
-        if self.mode == 'combination':  
-            for par in self.non_default_pars:
-                self.num_files                                          = self.num_files*len(self.MASTER[par])
-        if self.mode == 'sequential':
-            if len(self.MASTER[self.non_default_pars[0]]) >= 1:         #Note that if all parameters are default, then self.num_files = 1 (initialized with this value)         
-                self.num_files                                          = len(self.MASTER[self.non_default_pars[0]])
-                            
+        if len(self.MASTER[self.non_default_pars[0]]) >= 1:         #Note that if all parameters are default, then self.num_files = 1 (initialized with this value)         
+            self.num_files                                          = len(self.MASTER[self.non_default_pars[0]])
+                        
         if self.verbose:    
             print '\nSTATUS:'   
             print '    '+str(self.num_files)+' files will be created at', self.subdir_fullpath+'\n' 
@@ -269,18 +260,15 @@ class make_yml(object):
         for par in self.MASTER.keys():
             list_of_all_parameters.append([par+'|'+value for value in self.MASTER[par]])
             
-        if self.mode == 'combination':                                      #Example: itertools.product([[a,b], [c], [d,e]]) = [(a,c,d), (a,c,e), (b,c,d), (b,c,e)] - Make a file per combination possible -  See http://www.saltycrane.com/blog/2011/11/find-all-combinations-set-lists-itertoolsproduct/
-            self.simulation_list                                        = list(itertools.product(*list_of_all_parameters))
-        
-        if self.mode == 'sequential':                                       #Example: input = [[a,b], [c,d], [e,f]] -> [(a,c,e), (b,d,f)] - Make a file per index in input lists (all lists must have same lenght - except default parameters - these are strings.)
-            for k in range(self.num_files):
-                self.simulation_list.append([])
-                for par in list_of_all_parameters:
-                    if len(par) > 1:
-                        self.simulation_list[k].append(par[k])
-                    else:   
-                        self.simulation_list[k].append(par[0])
-                
+
+        for k in range(self.num_files):
+            self.simulation_list.append([])
+            for par in list_of_all_parameters:
+                if len(par) > 1:
+                    self.simulation_list[k].append(par[k])
+                else:   
+                    self.simulation_list[k].append(par[0])
+            
         return None
 
     def filename_of_simulation(self, list_of_pars):
@@ -290,10 +278,10 @@ class make_yml(object):
             variable, value                                             = entry.split('|')
             if variable in self.non_default_pars:
                 if variable[0:5] != 'abun_':
-                    filename += variable+':'+value+'_'
+                    filename += variable+'-'+value+'_'
                 else:
                     if abs(float(value)) > 0.0001:  
-                        filename += variable+':'+value+'_'
+                        filename += variable+'-'+value+'_'
         filename = filename[:-1]
         filename  += '.yml' 
         
