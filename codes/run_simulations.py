@@ -28,8 +28,6 @@ import cPickle
 
 import numpy as np
 
-version = os.path.basename(__file__).split('_v')[-1].split('.py')[0]
-
 ##########################  STARTING THE RUN  ##########################
 
 class simulate_spectra(object):
@@ -154,7 +152,7 @@ class simulate_spectra(object):
     def run_SIM(self):      
         self.check_subdir()
         for i, inpfile in enumerate(self.created_ymlfiles_list):
-            outfile = self.output_dir+inpfile[:-4]+'_v'+version+'.pkl'
+            outfile = self.output_dir+inpfile[:-4]+'.pkl'
                 
             print self.input_dir+inpfile
             self.simulation = tardis.run_tardis(self.input_dir+inpfile, self.atom_data_dir)            
@@ -165,7 +163,7 @@ class simulate_spectra(object):
             if self.make_kromer:
                 #ylim = [7.e38, 7.e38, 7.e38, 7.e38, 4.e38,  4.e38,  4.e38,  4.e38, 1.8e39, 1.8e39, 1.8e39, 1.8e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 2.e39, 2.e39, 2.e39, 2.e39][i]
                 ylim=[3.e39, 3.e39, 3.e39, 3.e39][i]
-                kromer_output = self.output_dir+inpfile[:-4]+'_v'+version+'.png'
+                kromer_output = self.output_dir+inpfile[:-4]+'.png'
                 self.make_kromer_plot(kromer_output, ylim=ylim)
         
             D = self.analyse_and_add_quantities()     

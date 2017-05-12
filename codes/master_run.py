@@ -9,10 +9,10 @@ from make_structure_files import make_structure as class_make_structure
 from run_simulations import simulate_spectra as class_simulate_spectra
 
 """Uncomment input file to be imported"""
-#from input_pars_11fe import input_parameters as class_input
-#from input_pars_05bl import input_parameters as class_input
-#from input_pars_04eo import input_parameters as class_input
-from input_pars_fast import input_parameters as class_input
+#from input_pars_11fe import Input_Parameters as class_input
+#from input_pars_05bl import Input_Parameters as class_input
+#from input_pars_04eo import Input_Parameters as class_input
+from input_pars_fast import Input_Parameters as class_input
 
 ##########################  CALLING CLASSES  ###########################
 
@@ -81,7 +81,7 @@ class master(class_input):
         if self.structure_type == 'file':
             """Create .yml file which point to structure files."""
             object_make_yml = Make_Yml(
-              mode=self.mode, write_files=self.flag_make_yml,
+              write_files=self.flag_make_yml,
               log_lum=self.luminosity,
               time_explosion=self.time_explosion,
               velocity_start=self.velocity_start,
