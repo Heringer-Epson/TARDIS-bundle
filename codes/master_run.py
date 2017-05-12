@@ -4,19 +4,15 @@ import os
 import inspect                                                            
 from shutil import copyfile
 
-import make_yml as module_make_yml
-import run_simulations as module_run_simulations
-import make_structure_files as module_make_structure_files
-
+from make_yml_files import Make_Yml
 from make_structure_files import make_structure as class_make_structure
-from make_yml import make_yml as class_make_yml
 from run_simulations import simulate_spectra as class_simulate_spectra
 
 """Uncomment input file to be imported"""
 #from input_pars_11fe import input_parameters as class_input
-from input_pars_05bl import input_parameters as class_input
+#from input_pars_05bl import input_parameters as class_input
 #from input_pars_04eo import input_parameters as class_input
-#from input_pars_fast import input_parameters as class_input
+from input_pars_fast import input_parameters as class_input
 
 ##########################  CALLING CLASSES  ###########################
 
@@ -39,7 +35,7 @@ class master(class_input):
         self.flag_display_interface = flag_display_interface
         self.verbose = verbose
 
-        if self.input_file == 'input_pars_fast.py':
+        if self.input_file.split('.py')[0] == 'input_pars_fast':
             """
             Prevents the creation of a structure file, even if 
             'flag_make_structure' is True. This is because the 'fast'
@@ -84,7 +80,7 @@ class master(class_input):
                                          
         if self.structure_type == 'file':
             """Create .yml file which point to structure files."""
-            object_make_yml = class_make_yml(
+            object_make_yml = Make_Yml(
               mode=self.mode, write_files=self.flag_make_yml,
               log_lum=self.luminosity,
               time_explosion=self.time_explosion,
@@ -107,8 +103,8 @@ class master(class_input):
 
         elif self.structure_type == 'specific':
             """Create .yml file for a homogeneous ejecta."""
-            object_make_yml = class_make_yml(
-              mode=self.mode, write_files=self.flag_make_yml,
+            object_make_yml = Make_Yml(
+              write_files=self.flag_make_yml,
               log_lum=self.luminosity,
               time_explosion=self.time_explosion,
               structure_type=self.structure_type,
@@ -152,4 +148,4 @@ class master(class_input):
             copyfile(self.input_file, output_folder+self.input_file)
         return None 
 
-master_obj                                                              = master()      
+master_obj = master()      

@@ -166,7 +166,6 @@ class simulate_spectra(object):
                 #ylim = [7.e38, 7.e38, 7.e38, 7.e38, 4.e38,  4.e38,  4.e38,  4.e38, 1.8e39, 1.8e39, 1.8e39, 1.8e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 3.e39, 2.e39, 2.e39, 2.e39, 2.e39][i]
                 ylim=[3.e39, 3.e39, 3.e39, 3.e39][i]
                 kromer_output = self.output_dir+inpfile[:-4]+'_v'+version+'.png'
-                kromer_output.replace(':', '=')
                 self.make_kromer_plot(kromer_output, ylim=ylim)
         
             D = self.analyse_and_add_quantities()     
@@ -175,7 +174,8 @@ class simulate_spectra(object):
                 pkl = cPickle.load(inp)     
     
         if self.verbose:            
-            print '\n*** DONE - SUCCESSFUL RUN\n\n'
+            print '\n*** DONE - SUCCESSFUL RUN.'
+            print '           TARDIS version used: '+str(tardis.__version__)+'\n\n'
             
         return self.output_dir
 

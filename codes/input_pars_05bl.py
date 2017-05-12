@@ -70,7 +70,7 @@ class input_parameters(object):
         self.smoothing_window = 21
         self.N_MC_runs = 200#3000
 
-        self.make_kromer = False
+        self.make_kromer = True
         self.convert_luminosity_to_logsolar()
         if self.structure_type == 'file':
             """

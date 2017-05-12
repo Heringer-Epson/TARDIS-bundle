@@ -4,3 +4,4 @@ plot_Ti.py
 noise_analysis.py
 input_pars_04eo.py
 plot_scaled_density.py
+*.pyc

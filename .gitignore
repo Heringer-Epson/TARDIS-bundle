@@ -1,3 +1,10 @@
+#Ignore the atom_data file, which is available with the
+#TARDIS example at:
+#http://opensupernova.org/~ftsamis/tardis_example.tar.gz
+#Left in my local directory so that I don't need to download it
+#every time I reinstall tardis.
+./kurucz_cd23_chianti_H_He.h5 
+
 #Ignore all files in the input folders.
 ./INPUT_FILES/DENSITY_FILES/*
 ./INPUT_FILES/STRATIFIED_COMPOSITION_FILES/*
