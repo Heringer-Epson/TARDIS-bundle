@@ -9,10 +9,10 @@ from make_structure_files import make_structure as class_make_structure
 from run_simulations import simulate_spectra as class_simulate_spectra
 
 """Uncomment input file to be imported"""
-#from input_pars_11fe import Input_Parameters as class_input
+from input_pars_11fe import Input_Parameters as class_input
 #from input_pars_05bl import Input_Parameters as class_input
 #from input_pars_04eo import Input_Parameters as class_input
-from input_pars_fast import Input_Parameters as class_input
+#from input_pars_fast import Input_Parameters as class_input
 
 ##########################  CALLING CLASSES  ###########################
 
@@ -51,7 +51,7 @@ class master(class_input):
             print '****************************************************'
             print '***************** TARDIS SIMULATION ****************'         
             print '****************************************************'
-            print '\n\n'
+            print '\n'
             
             print 'MAKE STRUCTURE FILES-->', self.flag_make_structure
             print 'MAKE YML FILES-------->', self.flag_make_yml
