@@ -5,14 +5,14 @@ import inspect
 from shutil import copyfile
 
 from make_yml_files import Make_Yml
-from make_structure_files import make_structure as class_make_structure
-from run_simulations import simulate_spectra as class_simulate_spectra
+from make_structure_files import Make_Structure as class_make_structure
+from run_simulations import Simulate_Spectra as class_simulate_spectra
 
 """Uncomment input file to be imported"""
-from input_pars_11fe import Input_Parameters as class_input
+#from input_pars_11fe import Input_Parameters as class_input
 #from input_pars_05bl import Input_Parameters as class_input
 #from input_pars_04eo import Input_Parameters as class_input
-#from input_pars_fast import Input_Parameters as class_input
+from input_pars_fast import Input_Parameters as class_input
 
 ##########################  CALLING CLASSES  ###########################
 

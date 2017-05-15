@@ -13,7 +13,7 @@ import numpy as np
 import itertools                                                        
 import random
 
-class make_structure(object):
+class Make_Structure(object):
 
     def __init__(self,  abundance_dict, velocity_array, pass_density_as,
                  filename, es, ms, t_exp, time_0=None, rho_0=None,
