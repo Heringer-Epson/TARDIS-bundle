@@ -36,9 +36,9 @@ class Input_Parameters(object):
         self.last_num_packs = '5.0e+4'
         self.num_virtual_packs = '5'
 
-        self.run_uncertainties = False
+        self.run_uncertainties = True
         self.smoothing_window = 21
-        self.N_MC_runs = 3000
+        self.N_MC_runs = 300#3000
 
         self.make_kromer = True
     

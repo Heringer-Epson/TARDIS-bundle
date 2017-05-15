@@ -27,8 +27,35 @@ class Simulate_Spectra(object):
     
     Parameters
     ----------
-    subdir: subdirectory within 'INPUT_FILES/YML_FILES/' that contains
-            the input parameter files to be simulated by TARDIS.
+    
+    subdir : ~str
+        Subdirectory within 'INPUT_FILES/YML_FILES/' that contains
+        the input parameter files to be simulated by TARDIS.
+        
+    created_ymlfiles_list : ~list
+        Each entry in the list corresponds to the a created .yml file.
+        
+    run_uncertainties : ~boolean
+        If True, computes the uncertainty of some spectra features.
+                     
+    smoothing_window : ~float
+        Window to be used by the Savitzky-Golay filter to smooth the spectra.
+        
+    N_MC_runs : ~int
+        Number of MC runs to be used to compute uncertainties.
+        Only applicable if run_uncertainties is True.
+        
+    make_kromer : ~boolean
+        Flag to whether or not make a 'Kromer style' plot.
+        Requires the tardis_kromer_plot and tardis_minimal_model modules
+        available under the tardistools, which is to be installed concomitantly
+        to TARDIS.
+        
+    display_interface : ~boolean
+        Flag to whether or not display the default TARDIS graphical interface.
+        
+    verbose : ~boolean
+        Flag to whether or not print extra information.                                
                 
     Output
     -------
@@ -47,7 +74,7 @@ class Simulate_Spectra(object):
                      in the master code.                            
     """
 
-    def __init__(self, subdir, created_ymlfiles_list=None,
+    def __init__(self, subdir, created_ymlfiles_list,
                  run_uncertainties=True, smoothing_window=21,
                  N_MC_runs=3000, make_kromer=False,
                  display_interface=False, verbose=True):
@@ -55,10 +82,8 @@ class Simulate_Spectra(object):
         self.subdir = subdir
         self.input_dir = './../INPUT_FILES/YML_FILES/'+subdir
         self.output_dir = './../OUTPUT_FILES/'+subdir
-        self.atom_data_dir = os.path.join(
-          os.path.split(tardis.__file__)[0], 'data',
-          'kurucz_cd23_chianti_H_He.h5'
-          )
+        self.atom_data_dir = os.path.join(os.path.split(tardis.__file__)[0],
+          'data', 'kurucz_cd23_chianti_H_He.h5')
         self.created_ymlfiles_list = created_ymlfiles_list
         self.make_kromer = make_kromer
         self.display_interface = display_interface
@@ -111,7 +136,8 @@ class Simulate_Spectra(object):
         dir(self.simulation.model), etc...
         """        
         wavelength = self.simulation.runner.spectrum_virtual.wavelength[::-1]
-        flux = self.simulation.runner.spectrum_virtual.luminosity_density_lambda[::-1]
+        flux = (self.simulation.runner.spectrum_virtual
+          .luminosity_density_lambda[::-1])
         D = {}
         D = pd.DataFrame({'wavelength_raw': [wavelength],
                          'flux_raw': [flux], 'host_redshift': [0.]})
@@ -128,10 +154,9 @@ class Simulate_Spectra(object):
         D['r_outer'] = [self.simulation.model.r_outer.cgs]
         D['volume'] = [self.simulation.model.volume.cgs]
 
-        """ Add the number fraction of the ions for some of the most
-        important elements in the ejecta. The fraction is the integrated
-        fraction across all the shells. 
-        """
+        #Add the number fraction of the ions for some of the most
+        #important elements in the ejecta. The fraction is the integrated
+        #fraction across all the shells. 
         for element, el in zip([6, 8, 14, 20, 22, 24], ['C', 'O', 'Si', 'Ca', 'Ti', 'Cr']): 
             for ion, num in zip([0, 1, 2], ['I', 'II', 'III']):
                 """Runs through neutral, singly and doubly ionized states"""
@@ -140,38 +165,34 @@ class Simulate_Spectra(object):
                 try:
                     for i in range(len(self.simulation.model.density.cgs.value)):
                         """Runs through the shells"""
-                        total_number_density \
-                          += self.simulation.plasma.number_density[i].ix[element]            
-                        total_ion_density \
-                          += self.simulation.plasma.ion_number_density[i].ix[element].tolist()[ion]
+                        total_number_density += (self.simulation.plasma.
+                          number_density[i].ix[element])            
+                        total_ion_density += (self.simulation.plasma.
+                          ion_number_density[i].ix[element].tolist()[ion])
                         
-                    total_ion_fraction = \
-                      total_ion_density/total_number_density
-                    D['Integrated_number_density_'+str(el)] = \
-                      total_ion_density
-                    D['Integrated_ion_density_'+el+'_'+num] = \
-                      total_number_density
+                    total_ion_fraction = total_ion_density / total_number_density
+                    D['Integrated_number_density_'+str(el)] = total_ion_density
+                    D['Integrated_ion_density_'+el+'_'+num] = total_number_density
                     D['Fraction_'+el+'_'+num] = total_ion_fraction
                 except:
                     D['Integrated_number_density_'+str(el)] = 'Failed'
                     D['Integrated_ion_density_'+el+'_'+num] = 'Failed'
                     D['Fraction_'+el+'_'+num] = 'Failed'
                 
-        """Delete the simulation to make sure the memory is being freed."""
+        #Delete the simulation to make sure the memory is being freed.
         del self.simulation
-
-        """
-        Retrieve the pEW, depth, and velocity of some feature and if
-        self.run_uncertainties == True, also compute the corresponding
-        uncertainties via a MC method.
-        """
+        
+        #Retrieve the pEW, depth, and velocity of some feature and if
+        #self.run_uncertainties == True, also compute the corresponding
+        #uncertainties via a MC method.
         D = analyse(D, smoothing_mode='savgol',
                     smoothing_window=self.smoothing_window, 
                     verbose=True).run_analysis()       
         if self.run_uncertainties:
             D = uncertainty_routine(
-              D, smoothing_mode='savgol', smoothing_window=self.smoothing_window,
-              N_MC_runs=self.N_MC_runs).run_uncertainties()                     
+              D, smoothing_mode = 'savgol',
+              smoothing_window = self.smoothing_window,
+              N_MC_runs = self.N_MC_runs, verbose=True).run_uncertainties()                     
         return D
 
     def run_SIM(self):      
