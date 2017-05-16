@@ -58,6 +58,7 @@ class master(class_input):
             print 'MAKE STRUCTURE FILES-->', self.flag_make_structure
             print 'MAKE YML FILES-------->', self.flag_make_yml
             print 'RUN SIMULATIONS------->', self.flag_run_simulation
+            print 'COMPUTE FEATURES------>', self.flag_compute_features
             print 'MAKE KROMER PLOT------>', self.make_kromer
             print 'DISPLAY INTERFACE----->', self.flag_display_interface
             print '\n\n'
@@ -69,16 +70,15 @@ class master(class_input):
         if self.flag_make_structure:
             """Create a stratified density and abundance files."""
             Make_Structure(abundance_dict=self.abun,
-                                 velocity_array=self.velocity_array,
-                                 filename=self.filename_structure,
-                                 es=self.energy_ratio_scaling,
-                                 ms=self.mass_ratio_scaling,
-                                 t_exp=self.time_explosion,
-                                 pass_density_as=self.pass_density_as,
-                                 time_0=self.time_0, rho_0=self.rho_0,
-                                 v_0=self.v_0, 
-                                 density_array_given=self.density_array
-                                 )                  
+					       velocity_array=self.velocity_array,
+						   filename=self.filename_structure,
+						   es=self.energy_ratio_scaling,
+						   ms=self.mass_ratio_scaling,
+						   t_exp=self.time_explosion,
+						   pass_density_as=self.pass_density_as,
+						   time_0=self.time_0, rho_0=self.rho_0,
+						   v_0=self.v_0, 
+						   density_array_given=self.density_array)                  
                                          
         if self.structure_type == 'file':
             """Create .yml file which point to structure files."""
