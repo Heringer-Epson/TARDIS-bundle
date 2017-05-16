@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import tardis
 from tardis.tardistools.compute_features import Analyse_Spectra
 from tardis.tardistools.compute_features import Compute_Uncertainty
 
