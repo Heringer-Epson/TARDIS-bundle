@@ -4,9 +4,10 @@ import os
 import inspect                                                            
 from shutil import copyfile
 
+from make_structure_files import Make_Structure
 from make_yml_files import Make_Yml
-from make_structure_files import Make_Structure as class_make_structure
-from run_simulations import Simulate_Spectra as class_simulate_spectra
+from run_simulations import Simulate_Spectra
+from append_features import Analyse_Features
 
 """Uncomment input file to be imported"""
 #from input_pars_11fe import Input_Parameters as class_input
@@ -24,8 +25,8 @@ class master(class_input):
     """
     
     def __init__(self, flag_make_structure=True, flag_make_yml=True,
-                 flag_run_simulation=True, flag_display_interface=False,
-                 verbose=True):
+                 flag_run_simulation=False, flag_display_interface=False,
+                 flag_compute_features=True, verbose=True):
 
         class_input.__init__(self)
 
@@ -33,6 +34,7 @@ class master(class_input):
         self.flag_make_yml = flag_make_yml
         self.flag_run_simulation = flag_run_simulation
         self.flag_display_interface = flag_display_interface
+        self.flag_compute_features = flag_compute_features
         self.verbose = verbose
 
         if self.input_file.split('.py')[0] == 'input_pars_fast':
@@ -66,7 +68,7 @@ class master(class_input):
 
         if self.flag_make_structure:
             """Create a stratified density and abundance files."""
-            class_make_structure(abundance_dict=self.abun,
+            Make_Structure(abundance_dict=self.abun,
                                  velocity_array=self.velocity_array,
                                  filename=self.filename_structure,
                                  es=self.energy_ratio_scaling,
@@ -98,8 +100,7 @@ class master(class_input):
               num_packs=self.num_packs, iterations=self.iterations,
               last_num_packs=self.last_num_packs,
               num_virtual_packs=self.num_virtual_packs,
-              folder_name=self.subdir
-              )
+              folder_name=self.subdir)
 
         elif self.structure_type == 'specific':
             """Create .yml file for a homogeneous ejecta."""
@@ -127,25 +128,28 @@ class master(class_input):
               num_packs=self.num_packs, iterations=self.iterations,
               last_num_packs=self.last_num_packs,
               num_virtual_packs=self.num_virtual_packs,
-              folder_name=self.subdir
-              )               
+              folder_name=self.subdir)               
 
         self.created_ymlfiles_list = object_make_yml.run()
 
         if self.flag_run_simulation:
             """Run sequential TARDIS simulations."""
-            module_tardis_sim = class_simulate_spectra(
+            module_tardis_sim = Simulate_Spectra(
               self.subdir,
               created_ymlfiles_list=self.created_ymlfiles_list,
               make_kromer=self.make_kromer,
               run_uncertainties=self.run_uncertainties,
               smoothing_window=self.smoothing_window,
               N_MC_runs=self.N_MC_runs,
-              display_interface=self.flag_display_interface
-              )
+              display_interface=self.flag_display_interface)
               
             output_folder = module_tardis_sim.run_SIM()
             copyfile(self.input_file, output_folder+self.input_file)
-        return None 
+
+        if self.flag_compute_features:
+			Analyse_Features(
+			  self.subdir, created_ymlfiles_list=self.created_ymlfiles_list,
+			  run_uncertainties=self.run_uncertainties,
+			  smoothing_window=self.smoothing_window, N_MC_runs=self.N_MC_runs)				
 
 master_obj = master()      

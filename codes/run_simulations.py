@@ -4,22 +4,15 @@ import os
 import sys
 import shutil
 
-version = os.path.basename(__file__).split('_v')[-1].split('.py')[0]
-
 import tardis
-import matplotlib.pyplot as plt
-
 from tardis.gui import interface
-from tardis.tardistools.compute_features import analyse_spectra as analyse
-from tardis.tardistools.compute_features import uncertainty as uncertainty_routine
 import tardis.tardistools.tardis_kromer_plot as tkp
 import tardis.tardistools.tardis_minimal_model as tmm
-
-import pandas as pd
-import cPickle
+import matplotlib.pyplot as plt
 
 import numpy as np
-
+import pandas as pd
+import cPickle
 
 class Simulate_Spectra(object):
 
@@ -27,7 +20,6 @@ class Simulate_Spectra(object):
     
     Parameters
     ----------
-    
     subdir : ~str
         Subdirectory within 'INPUT_FILES/YML_FILES/' that contains
         the input parameter files to be simulated by TARDIS.
@@ -181,24 +173,13 @@ class Simulate_Spectra(object):
                 
         #Delete the simulation to make sure the memory is being freed.
         del self.simulation
-        
-        #Retrieve the pEW, depth, and velocity of some feature and if
-        #self.run_uncertainties == True, also compute the corresponding
-        #uncertainties via a MC method.
-        D = analyse(D, smoothing_mode='savgol',
-                    smoothing_window=self.smoothing_window, 
-                    verbose=True).run_analysis()       
-        if self.run_uncertainties:
-            D = uncertainty_routine(
-              D, smoothing_mode = 'savgol',
-              smoothing_window = self.smoothing_window,
-              N_MC_runs = self.N_MC_runs, verbose=True).run_uncertainties()                     
+                             
         return D
 
     def run_SIM(self):      
         self.check_subdir()
         for i, inpfile in enumerate(self.created_ymlfiles_list):
-            outfile = self.output_dir+inpfile[:-4]+'.pkl'
+            outfile = self.output_dir + inpfile.split('.yml')[0] + '.pkl'
                 
             self.simulation = tardis.run_tardis(
               self.input_dir+inpfile, self.atom_data_dir)            
