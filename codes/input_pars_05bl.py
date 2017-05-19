@@ -15,21 +15,14 @@ class Input_Parameters(object):
     def __init__(self):     
 
         self.input_file = __file__.split('/')[-1]
-        self.subdir = '05bl_tes/'
-        self.filename_structure = '05bl_test'
+        self.subdir = '05bl_standard_downbranch_lowSN/'
+        self.filename_structure = '05bl_standard_downbranch_lowSN'
         self.mode = 'sequential'
 
         """
         Below, several pre-defined options for simulation 05bl ejecta.
         Uncomment preferred set. 
         """
-        
-        """
-        Temp - for a quick test
-        """
-        self.luminosity = ['4.24e8']
-        self.time_explosion = ['12.0']
-        self.velocity_start = ['8100']
         
         """
         Default
@@ -41,14 +34,14 @@ class Input_Parameters(object):
         """
         Used to luminosity variations at all epochs
         """
-        #self.luminosity = [
-        #  '3.35e8', '4.24e8', '5.68e8', '7.73e8', '3.93e8',
-        #  '6.70e8', '8.48e8', '1.14e9', '1.55e9', '7.86e8',
-        #  '1.01e9', '1.27e9', '1.70e9', '2.32e9', '1.02e9',
-        #  '1.34e9', '1.70e9', '2.24e9', '3.01e9', '1.57e9'
-        #  ]
-        #self.time_explosion = ['11.0', '12.0', '14.0', '21.8', '29.9']*4
-        #self.velocity_start = ['8400', '8100', '7500', '6600', '3300']*4
+        self.luminosity = [
+          '3.35e8', '4.24e8', '5.68e8', '7.73e8', '3.93e8',
+          '6.70e8', '8.48e8', '1.14e9', '1.55e9', '7.86e8',
+          '1.01e9', '1.27e9', '1.70e9', '2.32e9', '1.02e9',
+          '1.34e9', '1.70e9', '2.24e9', '3.01e9', '1.57e9'
+          ]
+        self.time_explosion = ['11.0', '12.0', '14.0', '21.8', '29.9']*4
+        self.velocity_start = ['8400', '8100', '7500', '6600', '3300']*4
 
         """
         Used to compute L-grid
@@ -72,17 +65,25 @@ class Input_Parameters(object):
         self.rad_rates_type = 'dilute-blackbody'
         self.line_interaction = 'downbranch'
 
+        #For high S/N runs
         self.seeds = '23111963'
-        self.num_packs = '1.0e+4'#'1.0e+5'#'2.0e+5'
-        self.iterations = '3'#'15'#'20'
-        self.last_num_packs = '1.0e+4'#'5.0e+5'#'5.0e+5'
+        #self.num_packs = '2.0e+5'
+        #self.iterations = '15'
+        #self.last_num_packs = '5.0e+5'
+        #self.num_virtual_packs = '5'
+
+        #For faster runs
+        self.num_packs = '1.0e+5'
+        self.iterations = '10'
+        self.last_num_packs = '1.0e+5'
         self.num_virtual_packs = '5'
 
-        self.run_uncertainties =True
+        self.run_uncertainties = False
         self.smoothing_window = 21
-        self.N_MC_runs = 200#3000
+        self.N_MC_runs = 3000
 
-        self.make_kromer = True
+        self.make_kromer = False
+        
         self.convert_luminosity_to_logsolar()
         
         self.mass_ratio_scaling = '1.0'

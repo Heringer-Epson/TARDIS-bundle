@@ -10,12 +10,10 @@ from run_simulations import Simulate_Spectra
 from append_features import Analyse_Features
 
 """Uncomment input file to be imported"""
-#from input_pars_11fe import Input_Parameters as class_input
+from input_pars_11fe import Input_Parameters as class_input
 #from input_pars_05bl import Input_Parameters as class_input
 #from input_pars_04eo import Input_Parameters as class_input
-from input_pars_fast import Input_Parameters as class_input
-
-##########################  CALLING CLASSES  ###########################
+#from input_pars_fast import Input_Parameters as class_input
 
 class master(class_input):
    

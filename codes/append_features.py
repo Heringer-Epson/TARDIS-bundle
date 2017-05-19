@@ -3,6 +3,11 @@
 from tardis.tardistools.compute_features import Analyse_Spectra
 from tardis.tardistools.compute_features import Compute_Uncertainty
 
+##
+from tardis.tardistools.retrieve_observables_uncertainty_v10 import analyse_spectra
+from tardis.tardistools.retrieve_observables_uncertainty_v10 import uncertainty
+##
+
 import numpy as np
 import pandas as pd
 import cPickle
@@ -98,15 +103,34 @@ class Analyse_Features(object):
                             del pkl[key]
                 
                 #Perform feature analysis.
-                pkl = Analyse_Spectra(pkl, smoothing_mode='savgol',
+                pkl1 = Analyse_Spectra(pkl, smoothing_mode='savgol',
                             smoothing_window=self.smoothing_window, 
                             verbose=True).run_analysis()       
                 
                 #Perfomer calclulation of uncertainties.
                 if self.run_uncertainties:
-                    pkl = Compute_Uncertainty(pkl, smoothing_mode='savgol',
+                    pkl1 = Compute_Uncertainty(pkl, smoothing_mode='savgol',
                       smoothing_window=self.smoothing_window,
                       N_MC_runs=self.N_MC_runs, verbose=True).run_uncertainties()
+
+                
+                ##Temp comparison - can be deleted
+                #Perform feature analysis.
+                print 'New calc', pkl1['pEW_f6']
+                
+                pkl2 = analyse_spectra(pkl, smoothing_mode='savgol',
+                            smoothing_window=self.smoothing_window, 
+                            verbose=True).run_analysis()       
+                
+                #Perfomer calclulation of uncertainties.
+                if self.run_uncertainties:
+                    pkl2 = uncertainty(pkl, smoothing_mode='savgol',
+                      smoothing_window=self.smoothing_window,
+                      N_MC_runs=self.N_MC_runs, verbose=True).run_uncertainties()                
+                
+                print 'Old calc', pkl2['pEW_f6']
+                ##
+
                       
                 pkl.to_pickle(file_path)
                 

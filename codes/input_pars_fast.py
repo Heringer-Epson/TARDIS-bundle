@@ -40,7 +40,7 @@ class Input_Parameters(object):
         self.smoothing_window = 21
         self.N_MC_runs = 300#3000
 
-        self.make_kromer = True
+        self.make_kromer = False
     
         self.convert_luminosity_to_logsolar()
 
