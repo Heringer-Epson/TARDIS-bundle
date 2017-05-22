@@ -15,8 +15,8 @@ class Input_Parameters(object):
     def __init__(self):     
 
         self.input_file = __file__.split('/')[-1]
-        self.subdir = '11fe_Lgrid_downbranch_old/'
-        self.filename_structure = '11fe_Lgrid_downbranch_old'      
+        self.subdir = '11fe_Lgrid_downbranch/'
+        self.filename_structure = '11fe_Lgrid_downbranch'      
 
         """
         Temp - for a quick test
@@ -52,22 +52,26 @@ class Input_Parameters(object):
         #self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']*4      
 
         """
+        Change photosphere position at maximum for default and quarter L.
+        """
+        #self.luminosity = '0.88e9' #'3.5e9' 
+        #self.time_explosion = '19.1'   
+        #self.velocity_start = ['6700', '6900', '7100', '7300', '7500', '7700',  '7850', '8000', '8200',  '8400',  '8600',  '8800']
+
+        """
         Used to ejecta with scaled Titanium and Chromium
         """
         #self.luminosity = ['3.5e9', '0.88e9']
         #self.time_explosion = '19.1'#['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3']*4    
         #self.velocity_start = '7850'#['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']*4
 
+
         """
         Used to compute L-grid
         """
-        self.luminosity = [list(np.logspace(8.544, 9.72, 40).astype(str))[30]]
-        #self.luminosity = list(np.logspace(8.544, 9.72, 40).astype(str))
+        self.luminosity = list(np.logspace(8.544, 9.72, 40).astype(str))
         self.time_explosion = '19.1'    
         self.velocity_start = '7850'
-
-
-
 
         self.velocity_stop = '24000'
         self.luminosity_units = 'solar'
@@ -89,11 +93,11 @@ class Input_Parameters(object):
 
         #For faster runs
         self.num_packs = '1.0e+5'
-        self.iterations = '10'
+        self.iterations = '15'
         self.last_num_packs = '1.0e+5'
         self.num_virtual_packs = '5'
 
-        self.run_uncertainties = False
+        self.run_uncertainties = True
         self.smoothing_window = 21
         self.N_MC_runs = 300
 
