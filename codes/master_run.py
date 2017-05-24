@@ -23,7 +23,7 @@ class master(class_input):
     """
     
     def __init__(self, flag_make_structure=True, flag_make_yml=True,
-                 flag_run_simulation=False, flag_display_interface=False,
+                 flag_run_simulation=True, flag_display_interface=False,
                  flag_compute_features=True, verbose=True):
 
         class_input.__init__(self)
@@ -148,6 +148,7 @@ class master(class_input):
 			Analyse_Features(
 			  self.subdir, created_ymlfiles_list=self.created_ymlfiles_list,
 			  run_uncertainties=self.run_uncertainties,
-			  smoothing_window=self.smoothing_window, N_MC_runs=self.N_MC_runs)				
+			  smoothing_window=self.smoothing_window, N_MC_runs=self.N_MC_runs,
+              show_fig=self.flag_display_interface)				
 
 master_obj = master()      

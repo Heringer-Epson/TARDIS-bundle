@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
-from tardis.tardistools.compute_features import Analyse_Spectra
-from tardis.tardistools.compute_features import Compute_Uncertainty
-
 import numpy as np
 import pandas as pd
 import cPickle
+
+import tardis.tardistools.compute_features as cp
 
 class Analyse_Features(object):
 
@@ -48,12 +47,13 @@ class Analyse_Features(object):
 
     def __init__(self, subdir, created_ymlfiles_list,
                  run_uncertainties=True, smoothing_window=21,
-                 N_MC_runs=3000, verbose=True):
+                 N_MC_runs=3000, show_fig=False, verbose=True):
 
         self.subdir = subdir
         self.input_dir = './../INPUT_FILES/YML_FILES/'+subdir
         self.output_dir = './../OUTPUT_FILES/'+subdir
         self.created_ymlfiles_list = created_ymlfiles_list
+        self.show_fig = show_fig
         self.verbose = verbose
 
         self.run_uncertainties = run_uncertainties
@@ -98,15 +98,19 @@ class Analyse_Features(object):
                             del pkl[key]
                 
                 #Perform feature analysis.
-                pkl = Analyse_Spectra(pkl, smoothing_mode='savgol',
+                pkl = cp.Analyse_Spectra(pkl, smoothing_mode='savgol',
                             smoothing_window=self.smoothing_window, 
                             verbose=True).run_analysis()
                                             
                 #Perfomer calclulation of uncertainties.
                 if self.run_uncertainties:
-                    pkl = Compute_Uncertainty(pkl, smoothing_mode='savgol',
+                    pkl = cp.Compute_Uncertainty(pkl, smoothing_mode='savgol',
                       smoothing_window=self.smoothing_window,
                       N_MC_runs=self.N_MC_runs, verbose=True).run_uncertainties()       
+
+                if self.show_fig:
+                    cp.Plot_Spectra(pkl, show_fig=self.show_fig,
+                                    save_fig=False)
                       
                 pkl.to_pickle(file_path)
                 

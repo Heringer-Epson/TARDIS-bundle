@@ -15,8 +15,8 @@ class Input_Parameters(object):
     def __init__(self):     
 
         self.input_file = __file__.split('/')[-1]
-        self.subdir = '05bl_standard_downbranch_lowSN/'
-        self.filename_structure = '05bl_standard_downbranch_lowSN'
+        self.subdir = '05bl__standard_downbranch/'
+        self.filename_structure = '05bl_standard_downbranch'
         self.mode = 'sequential'
 
         """
@@ -46,7 +46,7 @@ class Input_Parameters(object):
         """
         Used to compute L-grid
         """
-        #self.luminosity = list(np.logspace(8.544, 9.72, 40).astype(str))
+        #self.luminosity = list(np.logspace(8.544, 9.72, 20).astype(str))
         #self.time_explosion = '21.8'
         #self.velocity_start = '6600'
 
@@ -67,18 +67,18 @@ class Input_Parameters(object):
 
         #For high S/N runs
         self.seeds = '23111963'
-        #self.num_packs = '2.0e+5'
-        #self.iterations = '15'
-        #self.last_num_packs = '5.0e+5'
-        #self.num_virtual_packs = '5'
-
-        #For faster runs
-        self.num_packs = '1.0e+5'
-        self.iterations = '10'
-        self.last_num_packs = '1.0e+5'
+        self.num_packs = '2.0e+5'
+        self.iterations = '15'
+        self.last_num_packs = '5.0e+5'
         self.num_virtual_packs = '5'
 
-        self.run_uncertainties = False
+        #For faster runs
+        #self.num_packs = '1.0e+5'
+        #self.iterations = '10'
+        #self.last_num_packs = '1.0e+5'
+        #self.num_virtual_packs = '5'
+
+        self.run_uncertainties = True
         self.smoothing_window = 21
         self.N_MC_runs = 3000
 
