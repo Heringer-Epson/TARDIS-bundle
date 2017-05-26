@@ -58,8 +58,8 @@ class Make_Structure(object):
             density_array = rho_of_v(np.asarray(self.velocity_array)
                             .astype(float))
 
-            density_file = ('./../INPUT_FILES/DENSITY_FILES/'+'density_'
-                            +self.filename_structure+'.dat')   
+            density_file = ('./../INPUT_FILES/DENSITY_FILES/' + 'density_'
+                            + self.filename_structure + '.dat')   
             out_density = open(density_file, 'w')
             
             out_density.write(self.time_0 +'  \n')      
@@ -68,8 +68,8 @@ class Make_Structure(object):
             
             for i, (velocity, density) in enumerate(zip(
                                    self.velocity_array, density_array)):
-                out_density.write('\n'+str(i)+'    '+str(velocity)
-                                  +'    '+str(density))                 
+                out_density.write('\n' + str(i) + '    ' + str(velocity)
+                                  + '    ' + str(density))                 
         
             out_density.close()
 
@@ -97,8 +97,8 @@ class Make_Structure(object):
                     density_array = density_scale*density_array
 
                     density_file = ('./../INPUT_FILES/DENSITY_FILES/'
-                                    +'density_'+self.filename_structure
-                                    +'_es:'+e_s+'_ms:'+m_s+'.dat') 
+                                    + 'density_' + self.filename_structure
+                                    + '_es-' + e_s + '_ms-' + m_s + '.dat') 
                                    
                     out_density = open(density_file, 'w')
                     
@@ -109,8 +109,8 @@ class Make_Structure(object):
                     for i, (velocity, density) in enumerate(zip(
                                         velocity_array, density_array)):
                                             
-                        out_density.write('\n'+str(i)+'    '
-                                     +str(velocity)+'    '+str(density))                 
+                        out_density.write('\n' + str(i) + '    '
+                                     + str(velocity) + '    ' + str(density))                 
 
                     out_density.close()
 
