@@ -9,6 +9,7 @@
 ./INPUT_FILES/DENSITY_FILES/*
 ./INPUT_FILES/STRATIFIED_COMPOSITION_FILES/*
 ./INPUT_FILES/YML_FILES/*
+./INPUT_FILES/YML_FILES/Hachinger_2005bl/
 
 #Except blank .gitkeep files, necessary to add empty folders to GitHub.
 !/INPUT_FILES/DENSITY_FILES/.gitkeep
