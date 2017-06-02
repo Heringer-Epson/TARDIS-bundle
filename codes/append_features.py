@@ -46,7 +46,7 @@ class Analyse_Features(object):
     """
 
     def __init__(self, subdir, created_ymlfiles_list,
-                 run_uncertainties=True, smoothing_window=21,
+                 extinction=0., run_uncertainties=True, smoothing_window=21,
                  N_MC_runs=3000, show_fig=False, verbose=True):
 
         self.subdir = subdir
@@ -56,6 +56,7 @@ class Analyse_Features(object):
         self.show_fig = show_fig
         self.verbose = verbose
 
+        self.extinction = extinction
         self.run_uncertainties = run_uncertainties
         self.smoothing_window = smoothing_window
         self.N_MC_runs = N_MC_runs 
@@ -98,9 +99,9 @@ class Analyse_Features(object):
                             del pkl[key]
                 
                 #Perform feature analysis.
-                pkl = cp.Analyse_Spectra(pkl, smoothing_mode='savgol',
-                            smoothing_window=self.smoothing_window, 
-                            verbose=True).run_analysis()
+                pkl = cp.Analyse_Spectra(
+                  pkl, extinction = self.extinction, smoothing_mode='savgol',
+                  smoothing_window=self.smoothing_window, verbose=True).run_analysis()
                                             
                 #Perfomer calclulation of uncertainties.
                 if self.run_uncertainties:

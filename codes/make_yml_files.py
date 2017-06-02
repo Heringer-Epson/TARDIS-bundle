@@ -297,7 +297,8 @@ class Make_Yml(object):
                     yml_file.write('        filename: '+os.path.abspath(
                                    './../INPUT_FILES/DENSITY_FILES/')
                                    +'/density_'+self.filename_structure
-                                   +'_es-'+PARS['es']+'_ms-'+PARS['ms']+'.dat\n') 
+                                   +'_es-'+PARS['es']+'_ms-'+PARS['ms']
+                                   +'_'+PARS['time_explosion']+'_day.dat\n')                                    
                     yml_file.write('        filetype: simple_ascii\n')
                     yml_file.write('        v_inner_boundary: '
                                    +PARS['velocity_start']+' km/s\n')

@@ -12,13 +12,13 @@ from append_features import Analyse_Features
 """Uncomment input file to be imported"""
 from input_pars_11fe import Input_Parameters as class_input
 #from input_pars_05bl import Input_Parameters as class_input
+#from input_pars_Hach import Input_Parameters as class_input
 #from input_pars_04eo import Input_Parameters as class_input
 #from input_pars_fast import Input_Parameters as class_input
 
 class master(class_input):
    
-    """
-    THIS CODE MAKES THE YML FILES, RUN THE SIMULATIONS AND COMPARE
+    """THIS CODE MAKES THE YML FILES, RUN THE SIMULATIONS AND COMPARE
     THE OUTPUT SPECTRA.
     """
     
@@ -35,7 +35,8 @@ class master(class_input):
         self.flag_compute_features = flag_compute_features
         self.verbose = verbose
 
-        if self.input_file.split('.py')[0] == 'input_pars_fast':
+        if (self.input_file.split('.py')[0] == 'input_pars_fast' or 
+            self.input_file.split('.py')[0] == 'input_pars_Hach'):
             """
             Prevents the creation of a structure file, even if 
             'flag_make_structure' is True. This is because the 'fast'
@@ -147,7 +148,8 @@ class master(class_input):
         if self.flag_compute_features:
 			Analyse_Features(
 			  self.subdir, created_ymlfiles_list=self.created_ymlfiles_list,
-			  run_uncertainties=self.run_uncertainties,
+			  extinction = self.extinction,
+              run_uncertainties=self.run_uncertainties,
 			  smoothing_window=self.smoothing_window, N_MC_runs=self.N_MC_runs,
               show_fig=self.flag_display_interface)				
 

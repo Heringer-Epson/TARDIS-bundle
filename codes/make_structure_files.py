@@ -52,78 +52,62 @@ class Make_Structure(object):
         self.make_abundance_file()
 
     def make_density_file(self):                        
-        if self.pass_density_as == 'from_exponential':              
-            def rho_of_v(v):
-                return self.rho_0*np.exp(-v/self.v_0)           
-            density_array = rho_of_v(np.asarray(self.velocity_array)
-                            .astype(float))
-
-            density_file = ('./../INPUT_FILES/DENSITY_FILES/' + 'density_'
-                            + self.filename_structure + '.dat')   
-            out_density = open(density_file, 'w')
-            
-            out_density.write(self.time_0 +'  \n')      
-            out_density.write('# index velocity (km/s) density (g/cm^3)'
-                              )
-            
-            for i, (velocity, density) in enumerate(zip(
-                                   self.velocity_array, density_array)):
-                out_density.write('\n' + str(i) + '    ' + str(velocity)
-                                  + '    ' + str(density))                 
         
-            out_density.close()
-
-            if self.verbose:
-                print '    DENSITY FILE: '+density_file
+        if isinstance(self.t_exp, list):
+            aux_t_exp = self.t_exp
+        else:
+            aux_t_exp = [self.t_exp]
+                
+        for t_exp in aux_t_exp:
     
-        elif self.pass_density_as == 'by_hand':
-            density_array = np.asarray(self.density_array_given).astype(
-                                                                  float)    
-    
-            if isinstance(self.es, str):
-                self.es = [self.es]
-            if isinstance(self.ms, str):
-                self.ms = [self.ms]     
+            if self.pass_density_as == 'by_hand':
+                density_array = np.asarray(self.density_array_given).astype(float)    
         
-            for e_s in self.es:
-                for m_s in self.ms:
+                if isinstance(self.es, str):
+                    self.es = [self.es]
+                if isinstance(self.ms, str):
+                    self.ms = [self.ms]     
+            
+                for e_s in self.es:
+                    for m_s in self.ms:
 
-                    velocity_scale = float(e_s)**(-1.5)*float(m_s)**2.5
-                    density_scale = float(e_s)**0.5*float(m_s)**(-1.5)
-                                     
-                    velocity_array = velocity_scale*np.array(
-                                   self.velocity_array).astype(np.float)
-                                   
-                    density_array = density_scale*density_array
+                        velocity_scale = float(e_s)**(-1.5)*float(m_s)**2.5
+                        density_scale = float(e_s)**0.5*float(m_s)**(-1.5)
+                                         
+                        velocity_array = velocity_scale*np.array(
+                                       self.velocity_array).astype(np.float)
+                                       
+                        density_array = density_scale*density_array
 
-                    density_file = ('./../INPUT_FILES/DENSITY_FILES/'
-                                    + 'density_' + self.filename_structure
-                                    + '_es-' + e_s + '_ms-' + m_s + '.dat') 
-                                   
-                    out_density = open(density_file, 'w')
-                    
-                    out_density.write(self.time_0 +'  \n')      
-                    out_density.write('# index velocity (km/s)  \
-                                       density (g/cm^3)')
-                    
-                    for i, (velocity, density) in enumerate(zip(
-                                        velocity_array, density_array)):
-                                            
-                        out_density.write('\n' + str(i) + '    '
-                                     + str(velocity) + '    ' + str(density))                 
+                        density_file = ('./../INPUT_FILES/DENSITY_FILES/'
+                                        + 'density_' + self.filename_structure
+                                        + '_es-' + e_s + '_ms-' + m_s +'_'+t_exp
+                                        +'_day.dat') 
+                                       
+                        out_density = open(density_file, 'w')
+                        
+                        out_density.write(self.time_0 +'  \n')      
+                        out_density.write('# index velocity (km/s)  \
+                                           density (g/cm^3)')
+                        
+                        for i, (velocity, density) in enumerate(zip(
+                                            velocity_array, density_array)):
+                                                
+                            out_density.write('\n' + str(i) + '    '
+                                         + str(velocity) + '    ' + str(density))                 
 
-                    out_density.close()
+                        out_density.close()
 
-                    if self.verbose:
-                        print '    DENSITY FILE: '+density_file
+                        if self.verbose:
+                            print '    DENSITY FILE: '+density_file
 
-        else:   
-            raise ValueError("density type 'exponential' is allowed \
-                              (supplied %s) " % (self.density_type))
-        
+            else:   
+                raise ValueError("density type 'by_hand' is allowed \
+                                  (supplied %s) " % (self.density_type))
+            
     def make_abundance_file(self):
 
-        def decay_Ni_Co_Fe(time,Ni_formed):
+        def decay_Ni_Co_Fe(time, Ni_formed):
             """Calculates the decay chain Ni->Co->Fe.
             
             Source: Nadyozhin+ 1994
