@@ -15,17 +15,20 @@ class Input_Parameters(object):
     def __init__(self):     
 
         self.input_file = __file__.split('/')[-1]
-        self.subdir = '11fe_standard_downbranch/'
-        self.filename_structure = '11fe_standard_downbranch'      
+        self.subdir = '11fe_example/'
+        self.filename_structure = '11fe_example'      
         self.extinction = -0.014
 
         """
         Temp - for a quick test
         """
-        #self.luminosity = ['0.08e9']
+        #self.luminosity = [str(format(np.log10(3.5e7), '.3f'))]
         #self.time_explosion = ['19.1'] 
-        #self.velocity_start = ['6600']
-
+        #self.velocity_start = ['18000']
+        
+        self.luminosity = [str(format(np.log10(3.5e9), '.3f'))]
+        self.time_explosion = ['19.1'] 
+        self.velocity_start = ['6600']
         """
         Default
         """
@@ -44,12 +47,12 @@ class Input_Parameters(object):
         """
         Used to luminosity variations at all epochs
         """
-        self.luminosity = []
-        lum = [np.log10(l) for l in [2.3e9, 3.5e9, 2.3e9]]
-        for scale in [1., 0.5, 0.33, 0.25]:
-            self.luminosity += [str(format(np.log10(10.**l * scale), '.3f')) for l in list(lum)]        
-        self.time_explosion = ['12.1', '19.1', '28.3']*4
-        self.velocity_start = ['10700', '7850', '4550']*4      
+        #self.luminosity = []
+        #lum = [np.log10(l) for l in [2.3e9, 3.5e9, 2.3e9]]
+        #for scale in [1., 0.5, 0.33, 0.25]:
+        #    self.luminosity += [str(format(np.log10(10.**l * scale), '.3f')) for l in list(lum)]        
+        #self.time_explosion = ['12.1', '19.1', '28.3']*4
+        #self.velocity_start = ['10700', '7850', '4550']*4      
 
         """
         Used to compute L-grid
@@ -103,7 +106,7 @@ class Input_Parameters(object):
         #For high S/N runs
         #self.seeds = '23111963'
         #self.num_packs = '2.0e+5'
-        #self.iterations = '15'
+        #self.iterations = '20'
         #self.last_num_packs = '5.0e+5'
         #self.num_virtual_packs = '5'
 
@@ -114,7 +117,14 @@ class Input_Parameters(object):
         self.last_num_packs = '1.0e+5'
         self.num_virtual_packs = '5'
 
-        self.run_uncertainties = True
+        #For quite faster runs
+        #self.seeds = '23111963'
+        #self.num_packs = '1.0e+4'
+        #self.iterations = '20'
+        #self.last_num_packs = '5.0e+4'
+        #self.num_virtual_packs = '5'
+
+        self.run_uncertainties = False
         self.smoothing_window = 21
         self.N_MC_runs = 3000
 
@@ -135,8 +145,14 @@ class Input_Parameters(object):
                                np.log10(24000.), 100).astype(str)))
        
         self.pass_density_as = 'by_hand'#'from_exponential'# or 'by_hand'
-    
         self.density_array = rho11fe_velocity_to_density(self.velocity_array)
+        
+        """Testing - to be removed"""
+        #density_array = rho11fe_velocity_to_density(self.velocity_array)
+        #self.density_array = [0.000001 for rho in density_array]
+        """"""
+        
+        
         self.time_0 = '100 s'
         self.rho_0, self.v_0 = None, None
     
@@ -148,6 +164,8 @@ class Input_Parameters(object):
           'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn'
           ] 
     
+        """
+        Trying to approach Mazzali paper
         self.velocity_zones = ['3500',   '6700',   '7500',   '7850',   '8500',   '9000',   '10700',  '11300', '13300',  '16000',  '19500']
 
         self.abun_raw['H']  = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.0000', '0.0000', '0.0000']
@@ -180,7 +198,45 @@ class Input_Parameters(object):
         self.abun_raw['Ni'] = ['0.7279', '0.7265', '0.7000', '0.6600', '0.6200', '0.2600', '0.2100', '0.040', '0.0020', '0.0010', '0.0000']
         self.abun_raw['Cu'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.0000', '0.0000', '0.0000']
         self.abun_raw['Zn'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.0000', '0.0000', '0.0000']
+        """
 
+        """Former attempt to model MAzzali's paper that seems to work better to
+        reproduce 05bl, but the boundary of some zone are slightly different
+        than in the text of the paper."""
+        #self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']
+        self.velocity_zones = ['3500',   '7000',   '7500',   '8000',   '8500',   '9000',   '11000', '12000', '13500',  '16000',  '19500']
+ 
+        self.abun_raw['H']  = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['He'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Li'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Be'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['B']  = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['C']  = ['0.0000', '0.0000', '0.0000', '0.0080', '0.0080', '0.0080', '0.008', '0.000', '0.0310', '0.0260', '0.9804']
+        self.abun_raw['N']  = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['O']  = ['0.0000', '0.0000', '0.0000', '0.0200', '0.0900', '0.0900', '0.110', '0.351', '0.7030', '0.8605', '0.0120']
+        self.abun_raw['F']  = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Ne'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Na'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Mg'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.020', '0.0300', '0.0300', '0.0030']
+        self.abun_raw['Al'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Si'] = ['0.0900', '0.2000', '0.2165', '0.2285', '0.1985', '0.4785', '0.563', '0.440', '0.2000', '0.0600', '0.0040']
+        self.abun_raw['P']  = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['S']  = ['0.0300', '0.0600', '0.0700', '0.0700', '0.0700', '0.1500', '0.150', '0.080', '0.0300', '0.0200', '0.0005']
+        self.abun_raw['Cl'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Ar'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['K']  = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Ca'] = ['0.0001', '0.0030', '0.0030', '0.0030', '0.0030', '0.0030', '0.003', '0.003', '0.0030', '0.0020', '0.0000']
+        self.abun_raw['Sc'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Ti'] = ['0.0010', '0.0050', '0.0050', '0.0050', '0.0050', '0.0050', '0.005', '0.003', '0.0005', '0.0000', '0.0000']
+        self.abun_raw['V']  = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Cr'] = ['0.0010', '0.0050', '0.0050', '0.0050', '0.0050', '0.0050', '0.005', '0.003', '0.0005', '0.0000', '0.0000']
+        self.abun_raw['Mn'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Fe'] = ['0.1500', '0.0005', '0.0005', '0.0005', '0.0005', '0.0005', '0.006', '0.060', '0.0010', '0.0005', '0.0001']
+        self.abun_raw['Co'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Ni'] = ['0.7279', '0.7265', '0.7000', '0.6600', '0.6200', '0.2600', '0.150', '0.040', '0.0010', '0.0010', '0.0000']
+        self.abun_raw['Cu'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+        self.abun_raw['Zn'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
+  
         """
         Format abundances.
         """
