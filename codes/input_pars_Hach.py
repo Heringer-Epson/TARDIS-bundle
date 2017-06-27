@@ -37,11 +37,11 @@ class Input_Parameters(object):
         Used to luminosity variations at all epochs
         """
         #self.luminosity = []
-        #lum = [8.617, 8.861, 8.594]
+        #lum = [8.520, 8.617, 8.745, 8.861, 8.594]
         #for scale in [1., 2., 3., 4.]:
         #    self.luminosity += [str(format(np.log10(10.**l * scale), '.3f')) for l in list(lum)]
-        #self.time_explosion = ['12.0', '21.8', '29.9']*4
-        #self.velocity_start = ['8100', '6800', '3350']*4
+        #self.time_explosion = ['11.0', '12.0', '14.0', '21.8', '29.9']*4
+        #self.velocity_start = ['8350', '8100', '7600', '6800', '3350']*4
 
         """
         Used to compute L-grid
@@ -68,7 +68,7 @@ class Input_Parameters(object):
         #For high S/N runs
         self.seeds = '23111963'
         self.num_packs = '2.0e+5'
-        self.iterations = '15'
+        self.iterations = '20'
         self.last_num_packs = '5.0e+5'
         self.num_virtual_packs = '5'
 

@@ -8,8 +8,7 @@ from input_pars_11fe import Input_Parameters as class_input
 
 class Make_Table(class_input):
    
-    """THIS CODE MAKES THE YML FILES, RUN THE SIMULATIONS AND COMPARE
-    THE OUTPUT SPECTRA.
+    """
     """
     
     def __init__(self):

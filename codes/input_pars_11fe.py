@@ -15,8 +15,8 @@ class Input_Parameters(object):
     def __init__(self):     
 
         self.input_file = __file__.split('/')[-1]
-        self.subdir = '11fe_example/'
-        self.filename_structure = '11fe_example'      
+        self.subdir = '11fe_kromer_downbranch/'
+        self.filename_structure = '11fe_kromer_downbranch'      
         self.extinction = -0.014
 
         """
@@ -26,9 +26,6 @@ class Input_Parameters(object):
         #self.time_explosion = ['19.1'] 
         #self.velocity_start = ['18000']
         
-        self.luminosity = [str(format(np.log10(3.5e9), '.3f'))]
-        self.time_explosion = ['19.1'] 
-        self.velocity_start = ['6600']
         """
         Default
         """
@@ -47,12 +44,12 @@ class Input_Parameters(object):
         """
         Used to luminosity variations at all epochs
         """
-        #self.luminosity = []
-        #lum = [np.log10(l) for l in [2.3e9, 3.5e9, 2.3e9]]
-        #for scale in [1., 0.5, 0.33, 0.25]:
-        #    self.luminosity += [str(format(np.log10(10.**l * scale), '.3f')) for l in list(lum)]        
-        #self.time_explosion = ['12.1', '19.1', '28.3']*4
-        #self.velocity_start = ['10700', '7850', '4550']*4      
+        self.luminosity = []
+        lum = [np.log10(l) for l in [0.08e9, 0.32e9, 1.1e9, 2.3e9, 3.2e9, 3.5e9, 3.2e9, 2.3e9]]
+        for scale in [1., 0.5, 0.33, 0.25]:
+            self.luminosity += [str(format(np.log10(10.**l * scale), '.3f')) for l in list(lum)]        
+        self.time_explosion = ['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3']*4
+        self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']*4      
 
         """
         Used to compute L-grid
@@ -86,10 +83,11 @@ class Input_Parameters(object):
         """
         Used to ejecta with scaled Titanium and Chromium
         """
-        #self.luminosity = [str(np.log10(3.5e9)), str(np.log10(3.5e9 / 4.))]
+        #self.luminosity = []
+        #lum = [np.log10(l) for l in [3.5e9, 3.5e9 / 4.]]
+        #self.luminosity += [str(format(np.log10(10.**l), '.3f')) for l in list(lum)]        
         #self.time_explosion = '19.1'#['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3']*4    
         #self.velocity_start = '7850'#['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']*4
-
         """"""
 
         self.velocity_stop = '40000'
@@ -128,7 +126,7 @@ class Input_Parameters(object):
         self.smoothing_window = 21
         self.N_MC_runs = 3000
 
-        self.make_kromer = False
+        self.make_kromer = True
         
         self.TiCr_scaling = 1.00
         self.Fe_scaling = 1.00
@@ -145,13 +143,7 @@ class Input_Parameters(object):
                                np.log10(24000.), 100).astype(str)))
        
         self.pass_density_as = 'by_hand'#'from_exponential'# or 'by_hand'
-        self.density_array = rho11fe_velocity_to_density(self.velocity_array)
-        
-        """Testing - to be removed"""
-        #density_array = rho11fe_velocity_to_density(self.velocity_array)
-        #self.density_array = [0.000001 for rho in density_array]
-        """"""
-        
+        self.density_array = rho11fe_velocity_to_density(self.velocity_array)        
         
         self.time_0 = '100 s'
         self.rho_0, self.v_0 = None, None
