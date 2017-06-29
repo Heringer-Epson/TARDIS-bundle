@@ -33,7 +33,7 @@ class Make_Table(class_input):
                 print (' & ' + v + ' $-$ ' + zones[i - 1]),
                 
             for el in self.elements:
-                print (' & ' + self.abun_raw[el][i]),
+                print (' & ' + self.abun_raw[el][::-1][i]),
             print ' \\\\'               
 
 Make_Table()      

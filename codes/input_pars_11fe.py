@@ -15,8 +15,8 @@ class Input_Parameters(object):
     def __init__(self):     
 
         self.input_file = __file__.split('/')[-1]
-        self.subdir = '11fe_kromer_downbranch/'
-        self.filename_structure = '11fe_kromer_downbranch'      
+        self.subdir = '11fe_texp_premax_L-05bl/'
+        self.filename_structure = '11fe_texp_premax_L-05bl'      
         self.extinction = -0.014
 
         """
@@ -44,12 +44,12 @@ class Input_Parameters(object):
         """
         Used to luminosity variations at all epochs
         """
-        self.luminosity = []
-        lum = [np.log10(l) for l in [0.08e9, 0.32e9, 1.1e9, 2.3e9, 3.2e9, 3.5e9, 3.2e9, 2.3e9]]
-        for scale in [1., 0.5, 0.33, 0.25]:
-            self.luminosity += [str(format(np.log10(10.**l * scale), '.3f')) for l in list(lum)]        
-        self.time_explosion = ['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3']*4
-        self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']*4      
+        #self.luminosity = []
+        #lum = [np.log10(l) for l in [0.08e9, 0.32e9, 1.1e9, 2.3e9, 3.2e9, 3.5e9, 3.2e9, 2.3e9]]
+        #for scale in [1., 0.5, 0.33, 0.25]:
+        #    self.luminosity += [str(format(np.log10(10.**l * scale), '.3f')) for l in list(lum)]        
+        #self.time_explosion = ['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3']*4
+        #self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']*4      
 
         """
         Used to compute L-grid
@@ -59,11 +59,25 @@ class Input_Parameters(object):
         #self.velocity_start = '7850'
 
         """
-        Change photosphere position at pre-maximum for default, 0.33 and 0.18L.
+        Change photosphere position at pre-maximum for 05bl Lum.
         """
-        #self.luminosity =    '4.24e8' #'0.77e9' #'2.3e9' #'2.3e9' #
-        #self.time_explosion = '12.1'   
-        #self.velocity_start = ['8100', '8500', '9000', '10000', '10700', '11200', '11700', '12200', '12700']
+        #self.luminosity =    str(format(np.log10(4.13e8), '.3f')) #'0.77e9' #'2.3e9' #'2.3e9' #
+        #self.time_explosion = '12.1'  
+        #self.velocity_start = ['5000', '6000', '8100', '10700', '12200']
+
+        """
+        Change time explosion at pre-maximum for 05bl Lum.
+        """
+        self.luminosity =    '8.617' #'0.77e9' #'2.3e9' #'2.3e9' #
+        self.time_explosion = ['12.1']#['6', '7', '8', '9', '12.1', '13', '14']   
+        self.velocity_start = '10700'
+
+        """
+        Change time explosion at post-maximum for 05bl Lum.
+        """
+        #self.luminosity =    '8.594' #'0.77e9' #'2.3e9' #'2.3e9' #
+        #self.time_explosion = ['23', '25', '28.3', '30', '32', '34']   
+        #self.velocity_start = '4550'
 
         """
         Change photosphere position at maximum for default and quarter L.
@@ -102,23 +116,23 @@ class Input_Parameters(object):
         self.line_interaction = 'downbranch'
 
         #For high S/N runs
-        #self.seeds = '23111963'
-        #self.num_packs = '2.0e+5'
-        #self.iterations = '20'
-        #self.last_num_packs = '5.0e+5'
-        #self.num_virtual_packs = '5'
+        self.seeds = '23111963'
+        self.num_packs = '2.0e+5'
+        self.iterations = '20'
+        self.last_num_packs = '5.0e+5'
+        self.num_virtual_packs = '5'
 
         #For faster runs
-        self.seeds = '23111963'
-        self.num_packs = '1.0e+5'
-        self.iterations = '15'
-        self.last_num_packs = '1.0e+5'
-        self.num_virtual_packs = '5'
+        #self.seeds = '23111963'
+        #self.num_packs = '1.0e+5'
+        #self.iterations = '15'
+        #self.last_num_packs = '1.0e+5'
+        #self.num_virtual_packs = '5'
 
         #For quite faster runs
         #self.seeds = '23111963'
         #self.num_packs = '1.0e+4'
-        #self.iterations = '20'
+        #self.iterations = '15'
         #self.last_num_packs = '5.0e+4'
         #self.num_virtual_packs = '5'
 
@@ -126,7 +140,7 @@ class Input_Parameters(object):
         self.smoothing_window = 21
         self.N_MC_runs = 3000
 
-        self.make_kromer = True
+        self.make_kromer = False
         
         self.TiCr_scaling = 1.00
         self.Fe_scaling = 1.00
@@ -140,8 +154,7 @@ class Input_Parameters(object):
         #below. In which case, the corresponding abundance will be that of the
         #closest velocity zone **interior** to the requested velocity step.
         self.velocity_array = (list(np.logspace(np.log10(3550.),
-                               np.log10(24000.), 100).astype(str)))
-       
+                               np.log10(24000.), 100).astype(str)))       
         self.pass_density_as = 'by_hand'#'from_exponential'# or 'by_hand'
         self.density_array = rho11fe_velocity_to_density(self.velocity_array)        
         
@@ -197,7 +210,9 @@ class Input_Parameters(object):
         than in the text of the paper."""
         #self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']
         self.velocity_zones = ['3500',   '7000',   '7500',   '8000',   '8500',   '9000',   '11000', '12000', '13500',  '16000',  '19500']
- 
+        #self.velocity_zones = [str(int(v) * 1.2) for v in self.velocity_zones]
+        #print self.velocity_zones
+        
         self.abun_raw['H']  = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
         self.abun_raw['He'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
         self.abun_raw['Li'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
