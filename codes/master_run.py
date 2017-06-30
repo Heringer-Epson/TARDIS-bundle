@@ -9,10 +9,13 @@ from make_yml_files import Make_Yml
 from run_simulations import Simulate_Spectra
 from append_features import Analyse_Features
 
-"""Uncomment input file to be imported"""
+"""Uncomment input file to be imported.
+Note: to run the Hach simulation, one has to have first created the structure
+files separately (running 'make_structure_Hachinger.py' once. This is because
+the input was set up for Mazzali's code."""
+
 from input_pars_11fe import Input_Parameters as class_input
 #from input_pars_Hach import Input_Parameters as class_input
-#from input_pars_04eo import Input_Parameters as class_input
 #from input_pars_fast import Input_Parameters as class_input
 
 class master(class_input):

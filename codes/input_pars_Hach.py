@@ -8,7 +8,7 @@ class Input_Parameters(object):
 
     """
     Input parameters to reproduce the tomography of 2005bl according
-    to my interpretation of the data in Hachinger+ 2009
+    to the data provided by Hachinger, which was used in
     [[http://adsabs.harvard.edu/abs/2009MNRAS.399.1238H]].
     """
 

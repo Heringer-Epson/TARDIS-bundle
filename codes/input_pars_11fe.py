@@ -15,16 +15,16 @@ class Input_Parameters(object):
     def __init__(self):     
 
         self.input_file = __file__.split('/')[-1]
-        self.subdir = '11fe_texp_premax_L-05bl/'
-        self.filename_structure = '11fe_texp_premax_L-05bl'      
+        self.subdir = '11fe_testiii/'
+        self.filename_structure = '11fe_test'      
         self.extinction = -0.014
 
         """
         Temp - for a quick test
         """
-        #self.luminosity = [str(format(np.log10(3.5e7), '.3f'))]
-        #self.time_explosion = ['19.1'] 
-        #self.velocity_start = ['18000']
+        self.luminosity = [str(format(np.log10(3.5e7), '.3f'))]
+        self.time_explosion = ['19.1'] 
+        self.velocity_start = ['18000']
         
         """
         Default
@@ -68,9 +68,9 @@ class Input_Parameters(object):
         """
         Change time explosion at pre-maximum for 05bl Lum.
         """
-        self.luminosity =    '8.617' #'0.77e9' #'2.3e9' #'2.3e9' #
-        self.time_explosion = ['12.1']#['6', '7', '8', '9', '12.1', '13', '14']   
-        self.velocity_start = '10700'
+        #self.luminosity =    '8.617' #'0.77e9' #'2.3e9' #'2.3e9' #
+        #self.time_explosion = ['12.1']#['6', '7', '8', '9', '12.1', '13', '14']   
+        #self.velocity_start = '10700'
 
         """
         Change time explosion at post-maximum for 05bl Lum.
@@ -104,7 +104,10 @@ class Input_Parameters(object):
         #self.velocity_start = '7850'#['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']*4
         """"""
 
+        #Velocity stop does not matter, as long as it is above the highest
+        #velocity in the velocity_array.
         self.velocity_stop = '40000'
+        
         self.luminosity_units = 'logsolar'
         self.structure_type = 'file' #specific #file
         self.abundance_type = 'file' #file,uniform,branch_w7
@@ -116,11 +119,11 @@ class Input_Parameters(object):
         self.line_interaction = 'downbranch'
 
         #For high S/N runs
-        self.seeds = '23111963'
-        self.num_packs = '2.0e+5'
-        self.iterations = '20'
-        self.last_num_packs = '5.0e+5'
-        self.num_virtual_packs = '5'
+        #self.seeds = '23111963'
+        #self.num_packs = '2.0e+5'
+        #self.iterations = '20'
+        #self.last_num_packs = '5.0e+5'
+        #self.num_virtual_packs = '5'
 
         #For faster runs
         #self.seeds = '23111963'
@@ -130,11 +133,11 @@ class Input_Parameters(object):
         #self.num_virtual_packs = '5'
 
         #For quite faster runs
-        #self.seeds = '23111963'
-        #self.num_packs = '1.0e+4'
-        #self.iterations = '15'
-        #self.last_num_packs = '5.0e+4'
-        #self.num_virtual_packs = '5'
+        self.seeds = '23111963'
+        self.num_packs = '1.0e+4'
+        self.iterations = '15'
+        self.last_num_packs = '5.0e+4'
+        self.num_virtual_packs = '5'
 
         self.run_uncertainties = False
         self.smoothing_window = 21
@@ -210,8 +213,6 @@ class Input_Parameters(object):
         than in the text of the paper."""
         #self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']
         self.velocity_zones = ['3500',   '7000',   '7500',   '8000',   '8500',   '9000',   '11000', '12000', '13500',  '16000',  '19500']
-        #self.velocity_zones = [str(int(v) * 1.2) for v in self.velocity_zones]
-        #print self.velocity_zones
         
         self.abun_raw['H']  = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']
         self.abun_raw['He'] = ['0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.0000', '0.000', '0.000', '0.0000', '0.0000', '0.0000']

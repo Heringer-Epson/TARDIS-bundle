@@ -4,11 +4,12 @@ import os
 
 """Uncomment input file to be imported"""
 from input_pars_11fe import Input_Parameters as class_input
-#from input_pars_Hach import Input_Parameters as class_input
 
 class Make_Table(class_input):
    
-    """
+    """ Prints a table in .tex format (to be copied and pasted) containing the
+    element stratification of 11fe. 05bl is not included as the data from
+    Hachinger is in a different format.
     """
     
     def __init__(self):
