@@ -66,14 +66,12 @@ class Simulate_Spectra(object):
                      in the master code.                            
     """
 
-    def __init__(self, subdir, created_ymlfiles_list,
+    def __init__(self, created_ymlfiles_list,
                  run_uncertainties=True, smoothing_window=21,
                  N_MC_runs=3000, make_kromer=False,
                  display_interface=False, verbose=True):
 
-        self.subdir = subdir
-        self.input_dir = './../INPUT_FILES/YML_FILES/'+subdir
-        self.output_dir = './../OUTPUT_FILES/'+subdir
+        #self.input_dir = './../INPUT_FILES/YML_FILES/'+subdir
         self.atom_data_dir = os.path.join(os.path.split(tardis.__file__)[0],
           'data', 'kurucz_cd23_chianti_H_He.h5')
         self.created_ymlfiles_list = created_ymlfiles_list
@@ -98,27 +96,20 @@ class Simulate_Spectra(object):
             
             print 'DESCRIPTION:'
             print '    A TARDIS SIMULATION WILL BE CREATED FOR EACH .yml FILE.\n'
-        
-    def check_subdir(self): 
-        if not os.path.exists(self.output_dir):
-            os.mkdir(self.output_dir)
-        return None 
 
     def show_interface(self):
         if self.display_interface:
             interface.show(self.simulation)
-        return None
 
     def make_kromer_plot(self, output, ylim=None):
         minmodel = tmm.minimal_model(mode="virtual")
         minmodel.from_interactive(self.simulation)
         plotter = tkp.tardis_kromer_plotter(minmodel, mode="virtual")
-        plotter.generate_plot(xlim=(2500,11000), twinx=False)      
+        plotter.generate_plot(xlim=(2500,11000), ylim=(0.,3.), twinx=False)      
         plt.tight_layout()
         plt.savefig(output, format='png', dpi=360)
         #plt.show()
         self.kromer_figures.append(output)
-        return None
 
     def analyse_and_add_quantities(self):
         """ Add some extra information about simulation to the .pkl
@@ -145,7 +136,7 @@ class Simulate_Spectra(object):
         D['density'] = [self.simulation.model.density.cgs]
         D['r_outer'] = [self.simulation.model.r_outer.cgs]
         D['volume'] = [self.simulation.model.volume.cgs]
-
+        
         #Add the number fraction of the ions for some of the most
         #important elements in the ejecta. The fraction is the integrated
         #fraction across all the shells. 
@@ -174,32 +165,38 @@ class Simulate_Spectra(object):
         #Delete the simulation to make sure the memory is being freed.
         del self.simulation
                              
-        return D
+        return D, wavelength.value, flux.value
 
     def run_SIM(self):      
-        self.check_subdir()
-        for i, inpfile in enumerate(self.created_ymlfiles_list):
-            outfile = self.output_dir + inpfile.split('.yml')[0] + '.pkl'
+        for i, ymlfile_fullpath in enumerate(self.created_ymlfiles_list):
+            spawn_dir = os.path.dirname(ymlfile_fullpath) + '/'
+            file_prefix = ymlfile_fullpath.split('/')[-1].split('.yml')[0]
+            
+            outfile = spawn_dir + file_prefix
                 
             self.simulation = tardis.run_tardis(
-              self.input_dir+inpfile, self.atom_data_dir)            
+              ymlfile_fullpath, self.atom_data_dir)            
         
             if self.display_interface:
                 interface.show(self.simulation)
             
             if self.make_kromer:
-                kromer_output = self.output_dir+inpfile[:-4]+'.png'
+                kromer_output = spawn_dir + file_prefix +'.png'
                 self.make_kromer_plot(kromer_output)
         
-            D = self.analyse_and_add_quantities()     
-            D.to_pickle(outfile)
-            with open(outfile, 'r') as inp:
-                pkl = cPickle.load(inp)     
+            D, w, f = self.analyse_and_add_quantities()     
+            
+            #Create .pkl containg the spectrum and derived qquantities.
+            D.to_pickle(outfile + '.pkl')
+
+            #Create .dat file containg spectra only for uploading into WISEREP.
+            with open(outfile + '.dat'  ,'w') as out_spec:
+                for x, y in zip(w[:-1], f[:-1]):
+                    out_spec.write(str(x) + '    ' + str(y) + '\n')
+                out_spec.write(str(w[-1]) + '    ' + str(f[-1]))
     
         if self.verbose:            
             print '\n*** DONE - SUCCESSFUL RUN.'
             print '           TARDIS version used: ' \
                   +str(tardis.__version__)+'\n\n'
             
-        return self.output_dir
-

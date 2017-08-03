@@ -78,8 +78,7 @@ class Analyse_Features(object):
         spectral features are defined in the imported 'Analyse_Spectra' class.
         """ 
         for inpfile in self.created_ymlfiles_list:
-            file_path = ('./../OUTPUT_FILES/' + self.subdir
-                         + inpfile.split('.yml')[0]+'.pkl')
+            file_path = inpfile.split('.yml')[0]+'.pkl'
             with open(file_path, 'r+') as inp:
                 pkl = cPickle.load(inp)
 
