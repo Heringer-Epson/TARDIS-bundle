@@ -45,13 +45,10 @@ class Analyse_Features(object):
     Where 'subdir' defined in the input file.                           
     """
 
-    def __init__(self, subdir, created_ymlfiles_list,
+    def __init__(self, created_ymlfiles_list,
                  extinction=0., run_uncertainties=True, smoothing_window=21,
                  N_MC_runs=3000, show_fig=False, verbose=True):
 
-        self.subdir = subdir
-        self.input_dir = './../INPUT_FILES/YML_FILES/'+subdir
-        self.output_dir = './../OUTPUT_FILES/'+subdir
         self.created_ymlfiles_list = created_ymlfiles_list
         self.show_fig = show_fig
         self.verbose = verbose

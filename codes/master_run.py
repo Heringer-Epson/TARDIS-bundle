@@ -16,8 +16,8 @@ class Master(object):
     """
     
     def __init__(self, event, case, StoN,
-                 flag_run_simulation=True, run_uncertainties=False, 
-                 flag_compute_features=False, make_kromer=False,
+                 flag_run_simulation=True, flag_compute_features=False, 
+                 run_uncertainties=False, make_kromer=False,
                  flag_display_interface=False, verbose=True):
 
         self.inputs = class_input(event=event, case=case, StoN=StoN,
@@ -70,23 +70,33 @@ class Master(object):
 
         if self.flag_compute_features:
 			Analyse_Features(
-			  self.subdir, created_ymlfiles_list=self.created_ymlfiles_list,
-			  extinction = self.extinction,
+			  created_ymlfiles_list=self.created_ymlfiles_list,
+			  extinction = self.inputs.extinction,
               run_uncertainties=self.run_uncertainties,
-			  smoothing_window=self.smoothing_window, N_MC_runs=self.N_MC_runs,
+			  smoothing_window=self.inputs.smoothing_window,
+              N_MC_runs=self.inputs.N_MC_runs,
               show_fig=self.flag_display_interface)
               
+        #This return is used by the code 'run_test_cases.py' code.
         return self.created_ymlfiles_list      				
 
 if __name__ == '__main__':
 
     Master(event='fast', case='single', StoN='low', flag_run_simulation=True,
-           run_uncertainties=False, flag_compute_features=False, make_kromer=False,
+           flag_compute_features=False, run_uncertainties=False, make_kromer=False,
            flag_display_interface=False, verbose=True).run_master()      
            
     #Master(event='11fe', case='test', StoN='high', flag_run_simulation=False,
-    #       run_uncertainties=False, flag_compute_features=False, make_kromer=False,
+    #       flag_compute_features=False, run_uncertainties=False, make_kromer=False,
     #       flag_display_interface=False, verbose=True).run_master()      
-           
+
+    #Master(event='11fe', case='default_L-scaled', StoN='low', flag_run_simulation=True,
+    #       flag_compute_features=True, run_uncertainties=False, make_kromer=False,
+    #       flag_display_interface=False, verbose=True).run_master()
+
+    #Master(event='05bl', case='default_L-scaled', StoN='low', flag_run_simulation=True,
+    #       flag_compute_features=True, run_uncertainties=False, make_kromer=False,
+    #       flag_display_interface=False, verbose=True).run_master()           
+                      
 
        

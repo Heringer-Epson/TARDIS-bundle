@@ -124,6 +124,8 @@ class Simulate_Spectra(object):
         D = {}
         D = pd.DataFrame({'wavelength_raw': [wavelength],
                          'flux_raw': [flux], 'host_redshift': [0.]})
+        #Note that the synthetic spectra are not corrected for redshift.
+        #Instead, the observed spectra are.
                     
         D['t_rad'] = [self.simulation.model.t_rad.cgs]
         D['luminosity_requested'] = [self.simulation.luminosity_requested.cgs]
