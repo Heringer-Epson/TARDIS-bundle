@@ -25,8 +25,9 @@ class Master(object):
                                   make_kromer=make_kromer)
 
         self.flag_run_simulation = flag_run_simulation
-        self.flag_display_interface = flag_display_interface
         self.flag_compute_features = flag_compute_features
+        self.run_uncertainties = run_uncertainties
+        self.flag_display_interface = flag_display_interface
         self.verbose = verbose
         self.created_ymlfiles_list = None
 
@@ -64,6 +65,7 @@ class Master(object):
               run_uncertainties=self.inputs.run_uncertainties,
               smoothing_window=self.inputs.smoothing_window,
               N_MC_runs=self.inputs.N_MC_runs,
+              extinction = self.inputs.extinction,
               display_interface=self.flag_display_interface)
               
             module_tardis_sim.run_SIM()
@@ -71,7 +73,6 @@ class Master(object):
         if self.flag_compute_features:
 			Analyse_Features(
 			  created_ymlfiles_list=self.created_ymlfiles_list,
-			  extinction = self.inputs.extinction,
               run_uncertainties=self.run_uncertainties,
 			  smoothing_window=self.inputs.smoothing_window,
               N_MC_runs=self.inputs.N_MC_runs,
@@ -82,21 +83,27 @@ class Master(object):
 
 if __name__ == '__main__':
 
-    Master(event='fast', case='single', StoN='low', flag_run_simulation=True,
-           flag_compute_features=False, run_uncertainties=False, make_kromer=False,
-           flag_display_interface=False, verbose=True).run_master()      
-           
+    Master(event='fast', case='single', StoN='low', flag_run_simulation=False,
+           flag_compute_features=True, run_uncertainties=True, make_kromer=False,
+           flag_display_interface=False, verbose=False).run_master()      
+    
+
     #Master(event='11fe', case='test', StoN='high', flag_run_simulation=False,
     #       flag_compute_features=False, run_uncertainties=False, make_kromer=False,
     #       flag_display_interface=False, verbose=True).run_master()      
 
-    #Master(event='11fe', case='default_L-scaled', StoN='low', flag_run_simulation=True,
+    #Master(event='11fe', case='default_L-scaled', StoN='high', flag_run_simulation=True,
     #       flag_compute_features=True, run_uncertainties=False, make_kromer=False,
     #       flag_display_interface=False, verbose=True).run_master()
 
-    #Master(event='05bl', case='default_L-scaled', StoN='low', flag_run_simulation=True,
+    #Master(event='05bl', case='default_L-scaled', StoN='high', flag_run_simulation=True,
     #       flag_compute_features=True, run_uncertainties=False, make_kromer=False,
     #       flag_display_interface=False, verbose=True).run_master()           
                       
-
+    
+    """To be used to run multiple seeds for testing uncertainty calculation."""
+    #Master(event='fast', case='multiple', StoN='high', flag_run_simulation=True,
+    #       flag_compute_features=True, run_uncertainties=True, make_kromer=False,
+    #       flag_display_interface=False, verbose=False).run_master()      
+           
        

@@ -83,7 +83,7 @@ class Make_Inputs(object):
         self.density_array = inputs.density_array
         self.abun = inputs.abun
         self.time_0 = inputs.time_0
-        self.folder_name = inputs.subdir
+        self.subdir = inputs.subdir
 
         self.ionization = inputs.ionization
         self.excitation = inputs.excitation
@@ -134,7 +134,7 @@ class Make_Inputs(object):
         self.default_pars = []
         self.num_files = 1
         self.non_default_pars = []    
-        self.subdir_fullpath = ('./../OUTPUT_FILES/' + self.folder_name)
+        self.subdir_fullpath = ('./../OUTPUT_FILES/' + self.subdir)
         self.simulation_list = []
         self.created_ymlfiles_list = []
         self.start_time = time.time()
@@ -145,7 +145,6 @@ class Make_Inputs(object):
             print '--------------- Making .yml files ------------------'
             print '----------------------------------------------------'
             print '\n'
-        return None
         
     def collect_non_default_pars(self):
         """ Organise variables so that .yml files are created according
@@ -168,22 +167,18 @@ class Make_Inputs(object):
             print '\nSTATUS:'   
             print ('    '+str(self.num_files)+' .yml files will be created at '
                    + self.subdir_fullpath + '\n') 
-        return None  
 
     def make_outfolder(self):
         """Set outfolder name."""
-        if not isinstance(self.folder_name, str):
-            self.folder_name = 'Default/'
+        if not isinstance(self.subdir, str):
+            self.subdir = 'Default/'
             for par in self.non_default_pars:
-                self.folder_name = self.folder_name[:-1]+'_AND_'+par
+                self.subdir = self.subdir[:-1]+'_AND_'+par
         
         """Create the directory if it doesn't already exist."""
         outfolder = self.subdir_fullpath
-        if os.path.exists(outfolder):
-            shutil.rmtree(outfolder)
+        if not os.path.exists(outfolder):
             os.makedirs(outfolder)
-        else:
-            os.makedirs(outfolder)  
 
     def make_combination_of_parameters(self):
         """ 'self.simulation_list' is a master list where each entry is
@@ -203,7 +198,6 @@ class Make_Inputs(object):
                     self.simulation_list[k].append(par[k])
                 else:   
                     self.simulation_list[k].append(par[0])
-        return None
 
     def filename_of_simulation(self, list_of_pars):
         """ Returns a 'standardised' file name according to the
@@ -475,8 +469,9 @@ class Make_Inputs(object):
             ymlfile_fullpath = spawn_dir + filename + '.yml'         
             self.created_ymlfiles_list.append(ymlfile_fullpath)
 
-            #Make density and abundance files, if necessary.
-            os.mkdir(spawn_dir)
+            #Make density and abundance files, if necessary.            
+            if not os.path.exists(spawn_dir):
+                os.mkdir(spawn_dir)
             dens_fname, abun_fname = self.control_structure_files(
               spawn_dir, PARS['ms'], PARS['es'], PARS['TiCrs'], PARS['Fes'],
               PARS['time_explosion'])

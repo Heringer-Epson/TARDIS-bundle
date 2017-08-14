@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-import cPickle
+import pickle
 
 import tardis.tardistools.compute_features as cp
 
@@ -77,40 +77,51 @@ class Analyse_Features(object):
         for inpfile in self.created_ymlfiles_list:
             file_path = inpfile.split('.yml')[0]+'.pkl'
             with open(file_path, 'r+') as inp:
-                pkl = cPickle.load(inp)
+                D = pickle.load(inp)
 
                 #Check if features had been computed in a previous run.
                 #If so, then wipe feature values to prevent the error where
                 #the column already exists when adding a new column.
-                if 'pEW_f7' in pkl.keys():
-                    for key in pkl.keys():
+                if 'pEW_f7' in D.keys():
+                    for key in D.keys():
                        
                         keys_minimal = [
                           'wavelength_raw', 'flux_raw','host_redshift',
-                          't_rad', 'luminosity_requested', 'seed', 't_inner', 
-                          'v_inner', 'v_outer', 'w', 'time_explosion', 
-                          'density', 'r_outer', 'volume']
+                          'extinction', 't_rad', 'luminosity_requested',
+                          'seed', 't_inner', 'v_inner', 'v_outer', 'w',
+                          'time_explosion', 'density', 'r_outer', 'volume']
 
                         if key not in keys_minimal:
-                            del pkl[key]
+                            del D[key]
                 
-                #Perform feature analysis.
-                pkl = cp.Analyse_Spectra(
-                  pkl, extinction = self.extinction, smoothing_mode='savgol',
-                  smoothing_window=self.smoothing_window, verbose=True).run_analysis()
+                #Perform feature analysis.              
+                #pkl = cp.Analyse_Spectra(
+                #  pkl, smoothing_mode='savgol',
+                #  smoothing_window=self.smoothing_window,
+                #  verbose=True).run_analysis()
+
+                w = D['wavelength_raw']
+                f = D['flux_raw']
+                
+                D = cp.Analyse_Spectra(
+                  wavelength=D['wavelength_raw'].value,
+                  flux=D['flux_raw'].value,
+                  redshift=D['host_redshift'], extinction=D['extinction'],
+                  D=D, smoothing_window=self.smoothing_window,
+                  verbose=True).run_analysis()
                                             
                 #Perfomer calclulation of uncertainties.
                 if self.run_uncertainties:
-                    pkl = cp.Compute_Uncertainty(pkl, smoothing_mode='savgol',
-                      smoothing_window=self.smoothing_window,
+                    D = cp.Compute_Uncertainty(
+                      D=D, smoothing_window=self.smoothing_window,
                       N_MC_runs=self.N_MC_runs, verbose=True).run_uncertainties()       
 
                 if self.show_fig:
-                    cp.Plot_Spectra(pkl, show_fig=self.show_fig,
+                    cp.Plot_Spectra(D, show_fig=self.show_fig,
                                     save_fig=False)
-                      
-                pkl.to_pickle(file_path)
-                
-        with open(file_path, 'r') as inp:
-            pkl = cPickle.load(inp)                                        
+                            
+                #Create .pkl containg the spectrum and derived qquantities.
+                with open(file_path + '.pkl', 'w') as handle:
+                    pickle.dump(D, handle, protocol=pickle.HIGHEST_PROTOCOL)                
+                                                           
 
