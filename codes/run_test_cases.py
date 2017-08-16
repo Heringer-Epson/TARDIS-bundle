@@ -2,7 +2,7 @@
 
 import os   
 import math
-import cPickle
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -140,6 +140,28 @@ class Feature_Test(object):
         
         self.run_test()        
         
+    def run_single(self):
+
+        yml_list = Master(event='fast', case='single', StoN='low',
+                          flag_run_simulation=False, flag_compute_features=True,
+                          run_uncertainties=True, make_kromer=False,
+                          plot_spectra=True, show_figs=True,
+                          verbose=False).run_master()   
+
+        file_path = yml_list[0].split('.yml')[0]
+        with open(file_path + '.pkl', 'r+') as inp:
+            D = pickle.load(inp)
+            print '\n\nComparison of a few quantities. The default values are'\
+            ' from previous calculations made in stable versions of the code,'\
+            ' when the test case - event: fast, case: single, is run with a '\
+            'StoN: low.'
+            print 'pEW_f7 - current:', D['pEW_f7'], '+/-', D['pEW_unc_f7']
+            print 'pEW_f7 - default: 78.516112254 +/- 5.47670163015\n'
+            print 'depth_f7 - current:', D['depth_f7'], '+/-', D['depth_unc_f7']
+            print 'depth_f7 - default: 0.506081861312 +/- 0.0457031793996\n'
+            print 'velocity_f7 - current:', D['velocity_f7'], '+/-', D['velocity_unc_f7']
+            print 'velocity_f7 - default: -11.9338201259 +/- 0.432073982855\n'                        
+   
     def run_sine(self):
         #In the following, the chosen analytical function is sin(x). For
         #the feature to be computed, the signal has to be in a wavelength
@@ -244,7 +266,7 @@ class Feature_Test(object):
         #This is used to grab the correct directory, and to run the simulations
         #if they do not yet exist.
         inputs = class_input(event='fast', case='multiple', StoN='low',
-                             run_uncertainties=False, make_kromer=False)        
+                             run_uncertainties=False)        
 
         inp_dir = os.path.abspath('./../OUTPUT_FILES/' + inputs.subdir) + '/'
 
@@ -263,11 +285,9 @@ class Feature_Test(object):
                 for fname in os.listdir(subdir_fullpath): 
                     if fname.endswith('.pkl'):
                         with open(subdir_fullpath + fname) as inp:
-                            pkl = cPickle.load(inp) 
-                            quantity_list.append(pkl[self.q + '_' + self.n]
-                                                 .tolist()[0])
-                            unc_list.append(pkl[self.q + '_unc_' + self.n]
-                                                 .tolist()[0])
+                            pkl = pickle.load(inp) 
+                            quantity_list.append(pkl[self.q + '_' + self.n])
+                            unc_list.append(pkl[self.q + '_unc_' + self.n])
                             
         #Mean of the measured quantity.
         quantity_mean = str(format(np.mean(quantity_list), '.2f'))
@@ -293,8 +313,9 @@ class Feature_Test(object):
         print '---->Mean from multiple runs: ' + quantity_mean + '\n'     
 
         print '-->Uncertainty from:'
-        print '---->Multiple runs: ' + quantity_unc_seeds        
-        print '---->Mean of MC uncertainties: ' + quantity_unc_MC        
+        print '---->Standard deviation of multiple runs: ' + quantity_unc_seeds        
+        print '---->Mean of MC uncertainties: ' + quantity_unc_MC + '\n'        
+        
         print '---->Standard deviation of MC uncertainties: ' + quantity_unc_std        
  
         print '\n\n************* NOTES *************\n\n'               
@@ -307,6 +328,8 @@ class Feature_Test(object):
           + 'for 20% in the pEW uncertainty, as claimed in paper I.\n\n\n')
                 
     def run_test(self):
+        if self.test_case == 'single':
+            self.run_single()    
         if self.test_case == 'sine':
             self.run_sine()       
         if self.test_case == 'seeds':
@@ -315,10 +338,12 @@ class Feature_Test(object):
 
 #Input_Test(test_case='11fe')      
 #Input_Test(test_case='05bl')
+
+Feature_Test(test_case='single')
 #Feature_Test(test_case='sine', quantity='pEW', feature_number='f7',
 #              noise=0.05, spectra_grid=2)
 
-Feature_Test(test_case='seeds', quantity='pEW', feature_number='f7')
+#Feature_Test(test_case='seeds', quantity='pEW', feature_number='f7')
 #Feature_Test(test_case='seeds', quantity='velocity', feature_number='f7')
 #Feature_Test(test_case='seeds', quantity='depth', feature_number='f7')
 

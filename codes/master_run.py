@@ -16,18 +16,19 @@ class Master(object):
     """
     
     def __init__(self, event, case, StoN,
-                 flag_run_simulation=True, flag_compute_features=False, 
+                 flag_run_simulation=True, flag_compute_features=True, 
                  run_uncertainties=False, make_kromer=False,
-                 flag_display_interface=False, verbose=True):
+                 plot_spectra=False, show_figs=False, verbose=True):
 
         self.inputs = class_input(event=event, case=case, StoN=StoN,
-                                  run_uncertainties=run_uncertainties,
-                                  make_kromer=make_kromer)
+                                  run_uncertainties=run_uncertainties)
 
         self.flag_run_simulation = flag_run_simulation
         self.flag_compute_features = flag_compute_features
         self.run_uncertainties = run_uncertainties
-        self.flag_display_interface = flag_display_interface
+        self.make_kromer = make_kromer
+        self.plot_spectra = plot_spectra
+        self.show_figs = show_figs
         self.verbose = verbose
         self.created_ymlfiles_list = None
 
@@ -40,8 +41,9 @@ class Master(object):
             
             print 'RUN SIMULATIONS------->', self.flag_run_simulation
             print 'COMPUTE FEATURES------>', self.flag_compute_features
-            print 'MAKE KROMER PLOT------>', self.inputs.make_kromer
-            print 'DISPLAY INTERFACE----->', self.flag_display_interface
+            print 'MAKE KROMER PLOT------>', self.make_kromer
+            print 'PLOT SPECTRA----->', self.plot_spectra
+            print 'SHOW FIGURES----->', self.show_figs
             print '\n\n'
 
         #self.run_master()
@@ -61,12 +63,12 @@ class Master(object):
             """Run sequential TARDIS simulations."""
             module_tardis_sim = Simulate_Spectra(
               created_ymlfiles_list=self.created_ymlfiles_list,
-              make_kromer=self.inputs.make_kromer,
+              make_kromer=self.make_kromer,
               run_uncertainties=self.inputs.run_uncertainties,
               smoothing_window=self.inputs.smoothing_window,
               N_MC_runs=self.inputs.N_MC_runs,
               extinction = self.inputs.extinction,
-              display_interface=self.flag_display_interface)
+              display_interface=self.show_figs)
               
             module_tardis_sim.run_SIM()
 
@@ -76,34 +78,50 @@ class Master(object):
               run_uncertainties=self.run_uncertainties,
 			  smoothing_window=self.inputs.smoothing_window,
               N_MC_runs=self.inputs.N_MC_runs,
-              show_fig=self.flag_display_interface)
+              plot_spectra = self.plot_spectra,
+              show_fig=self.show_figs)
               
         #This return is used by the code 'run_test_cases.py' code.
         return self.created_ymlfiles_list      				
 
 if __name__ == '__main__':
 
-    Master(event='fast', case='single', StoN='low', flag_run_simulation=False,
-           flag_compute_features=True, run_uncertainties=True, make_kromer=False,
-           flag_display_interface=False, verbose=False).run_master()      
+    """Quick test"""
+    #Master(event='fast', case='single', StoN='low', flag_run_simulation=True,
+    #       flag_compute_features=True, run_uncertainties=True, make_kromer=False,
+    #       plot_spectra=True, show_figs=True, verbose=False).run_master()      
     
+    """Runs used in the paper"""
+    #Master(event='11fe', case='default_L-scaled', StoN='high',
+    #       flag_run_simulation=True, flag_compute_features=True,
+    #       run_uncertainties=False, make_kromer=False,
+    #       plot_spectra=True, show_figs=False, verbose=True).run_master()
 
-    #Master(event='11fe', case='test', StoN='high', flag_run_simulation=False,
-    #       flag_compute_features=False, run_uncertainties=False, make_kromer=False,
-    #       flag_display_interface=False, verbose=True).run_master()      
-
-    #Master(event='11fe', case='default_L-scaled', StoN='high', flag_run_simulation=True,
+    #Master(event='11fe', case='L-grid', StoN='high', flag_run_simulation=True,
     #       flag_compute_features=True, run_uncertainties=False, make_kromer=False,
-    #       flag_display_interface=False, verbose=True).run_master()
+    #       plot_spectra=True, show_figs=False, verbose=True).run_master()
+
+    #Master(event='11fe', case='Ti-grid', StoN='high', flag_run_simulation=True,
+    #       flag_compute_features=True, run_uncertainties=False, make_kromer=False,
+    #       plot_spectra=True, show_figs=False, verbose=True).run_master()
 
     #Master(event='05bl', case='default_L-scaled', StoN='high', flag_run_simulation=True,
     #       flag_compute_features=True, run_uncertainties=False, make_kromer=False,
-    #       flag_display_interface=False, verbose=True).run_master()           
-                      
+    #       plot_spectra=True, show_figs=False, verbose=True).run_master()                                 
     
+    Master(event='05bl', case='L-grid', StoN='high', flag_run_simulation=True,
+           flag_compute_features=True, run_uncertainties=False, make_kromer=False,
+           plot_spectra=True, show_figs=False, verbose=True).run_master()           
+  
     """To be used to run multiple seeds for testing uncertainty calculation."""
     #Master(event='fast', case='multiple', StoN='high', flag_run_simulation=True,
     #       flag_compute_features=True, run_uncertainties=True, make_kromer=False,
-    #       flag_display_interface=False, verbose=False).run_master()      
+    #       plot_spectra=True, show_figs=False, verbose=False).run_master()      
            
+
+
+
+    #Master(event='11fe', case='test', StoN='low', flag_run_simulation=True,
+    #       flag_compute_features=True, run_uncertainties=True, make_kromer=False,
+    #       plot_spectra=True, show_figs=False, verbose=True).run_master()      
        

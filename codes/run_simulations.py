@@ -8,7 +8,6 @@ import tardis
 from tardis.gui import interface
 import tardis.tardistools.tardis_kromer_plot as tkp
 import tardis.tardistools.tardis_minimal_model as tmm
-import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
@@ -120,15 +119,15 @@ class Simulate_Spectra(object):
         """        
         D = {}
 
-        wavelength = (self.simulation.runner.spectrum_virtual
-                               .wavelength[::-1])
-        flux = (self.simulation.runner.spectrum_virtual
-                         .luminosity_density_lambda[::-1])                       
+        wavelength = self.simulation.runner.spectrum_virtual.wavelength[::-1]
+        flux = self.simulation.runner.spectrum_virtual.luminosity_density_lambda[::-1]                       
         
         #Note that the synthetic spectra are not corrected for redshift.
-        #Instead, the observed spectra are.
-        D['wavelength_raw'] = wavelength
-        D['flux_raw'] = flux
+        #Instead, the observed spectra are. Only the wavelength and flux are
+        #stored with no units to allow re-computing quantities without
+        #re-running the simulation.
+        D['wavelength_raw'] = wavelength.value
+        D['flux_raw'] = flux.value
         D['host_redshift'] = 0.
         D['extinction'] = self.extinction
         D['t_rad'] = self.simulation.model.t_rad.cgs
@@ -199,8 +198,8 @@ class Simulate_Spectra(object):
             #Create .dat file containg spectra only for uploading into WISEREP.
             with open(outfile + '.dat'  ,'w') as out_spec:
                 for x, y in zip(w[:-1], f[:-1]):
-                    out_spec.write(str(x) + '    ' + str(y) + '\n')
-                out_spec.write(str(w[-1]) + '    ' + str(f[-1]))
+                    out_spec.write(str(x.value) + '    ' + str(y.value) + '\n')
+                out_spec.write(str(w[-1].value) + '    ' + str(f[-1].value))
     
         if self.verbose:            
             print '\n*** DONE - SUCCESSFUL RUN.'

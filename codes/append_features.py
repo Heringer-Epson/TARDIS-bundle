@@ -30,10 +30,7 @@ class Analyse_Features(object):
         
     N_MC_runs : ~int
         Number of MC runs to be used to compute uncertainties.
-        Only applicable if run_uncertainties is True.
-        
-    verbose : ~boolean
-        Flag to whether or not print extra information.                                
+        Only applicable if run_uncertainties is True.                             
                 
     Output
     -------
@@ -47,26 +44,17 @@ class Analyse_Features(object):
 
     def __init__(self, created_ymlfiles_list,
                  extinction=0., run_uncertainties=True, smoothing_window=21,
-                 N_MC_runs=3000, show_fig=False, verbose=True):
+                 N_MC_runs=3000, plot_spectra=False, show_fig=False):
 
         self.created_ymlfiles_list = created_ymlfiles_list
+        self.plot_spectra = plot_spectra
         self.show_fig = show_fig
-        self.verbose = verbose
 
         self.extinction = extinction
         self.run_uncertainties = run_uncertainties
         self.smoothing_window = smoothing_window
         self.N_MC_runs = N_MC_runs 
 
-        if self.verbose:
-            print '----------------------------------------------------'
-            print '---------------- COMPUTING FEATURES ----------------'
-            print '----------------------------------------------------'
-            print '\n' 
-            
-            print 'DESCRIPTION:'
-            print '    Appends pEW, depth and velocity to the simulations.\n'
-        
         self.get_features()
     
     def get_features(self):
@@ -75,8 +63,8 @@ class Analyse_Features(object):
         spectral features are defined in the imported 'Analyse_Spectra' class.
         """ 
         for inpfile in self.created_ymlfiles_list:
-            file_path = inpfile.split('.yml')[0]+'.pkl'
-            with open(file_path, 'r+') as inp:
+            file_path = inpfile.split('.yml')[0]
+            with open(file_path + '.pkl', 'r+') as inp:
                 D = pickle.load(inp)
 
                 #Check if features had been computed in a previous run.
@@ -94,31 +82,21 @@ class Analyse_Features(object):
                         if key not in keys_minimal:
                             del D[key]
                 
-                #Perform feature analysis.              
-                #pkl = cp.Analyse_Spectra(
-                #  pkl, smoothing_mode='savgol',
-                #  smoothing_window=self.smoothing_window,
-                #  verbose=True).run_analysis()
-
-                w = D['wavelength_raw']
-                f = D['flux_raw']
-                
                 D = cp.Analyse_Spectra(
-                  wavelength=D['wavelength_raw'].value,
-                  flux=D['flux_raw'].value,
+                  wavelength=D['wavelength_raw'],
+                  flux=D['flux_raw'],
                   redshift=D['host_redshift'], extinction=D['extinction'],
-                  D=D, smoothing_window=self.smoothing_window,
-                  verbose=True).run_analysis()
+                  D=D, smoothing_window=self.smoothing_window).run_analysis()
                                             
                 #Perfomer calclulation of uncertainties.
                 if self.run_uncertainties:
                     D = cp.Compute_Uncertainty(
                       D=D, smoothing_window=self.smoothing_window,
-                      N_MC_runs=self.N_MC_runs, verbose=True).run_uncertainties()       
+                      N_MC_runs=self.N_MC_runs).run_uncertainties()       
 
-                if self.show_fig:
-                    cp.Plot_Spectra(D, show_fig=self.show_fig,
-                                    save_fig=False)
+                if self.plot_spectra:
+                    cp.Plot_Spectra(D, file_path + '.png',
+                                    show_fig=self.show_fig, save_fig=True)
                             
                 #Create .pkl containg the spectrum and derived qquantities.
                 with open(file_path + '.pkl', 'w') as handle:
