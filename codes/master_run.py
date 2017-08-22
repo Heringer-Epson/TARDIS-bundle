@@ -68,7 +68,7 @@ class Master(object):
               smoothing_window=self.inputs.smoothing_window,
               N_MC_runs=self.inputs.N_MC_runs,
               extinction = self.inputs.extinction,
-              display_interface=self.show_figs)
+              show_figs=self.show_figs)
               
             module_tardis_sim.run_SIM()
 
@@ -86,42 +86,46 @@ class Master(object):
 
 if __name__ == '__main__':
 
-    """Quick test"""
-    #Master(event='fast', case='single', StoN='low', flag_run_simulation=True,
+    #Master(event='11fe', case='carbon', StoN='low', flag_run_simulation=False,
     #       flag_compute_features=True, run_uncertainties=True, make_kromer=False,
-    #       plot_spectra=True, show_figs=True, verbose=False).run_master()      
+    #       plot_spectra=False, show_figs=False, verbose=True).run_master() 
+
+    #Master(event='11fe', case='Fe-grid', StoN='medium', flag_run_simulation=False,
+    #       flag_compute_features=True, run_uncertainties=True, make_kromer=False,
+    #       plot_spectra=False, show_figs=False, verbose=True).run_master() 
     
     """Runs used in the paper"""
-    #Master(event='11fe', case='default_L-scaled', StoN='high',
-    #       flag_run_simulation=True, flag_compute_features=True,
-    #       run_uncertainties=False, make_kromer=False,
-    #       plot_spectra=True, show_figs=False, verbose=True).run_master()
+    #Master(event='11fe', case='default_L-scaled', StoN='high', flag_run_simulation=False,
+    #        flag_compute_features=True, run_uncertainties=True, make_kromer=False,
+    #       plot_spectra=False, show_figs=False, verbose=True).run_master()
 
-    #Master(event='11fe', case='L-grid', StoN='high', flag_run_simulation=True,
-    #       flag_compute_features=True, run_uncertainties=False, make_kromer=False,
-    #       plot_spectra=True, show_figs=False, verbose=True).run_master()
+    #Master(event='11fe', case='L-grid', StoN='high', flag_run_simulation=False,
+    #       flag_compute_features=True, run_uncertainties=True, make_kromer=False,
+    #       plot_spectra=False, show_figs=False, verbose=True).run_master()
+    '''
+    Master(event='11fe', case='Ti-grid', StoN='high', flag_run_simulation=False,
+           flag_compute_features=True, run_uncertainties=True, make_kromer=False,
+           plot_spectra=False, show_figs=False, verbose=True).run_master()
 
-    #Master(event='11fe', case='Ti-grid', StoN='high', flag_run_simulation=True,
-    #       flag_compute_features=True, run_uncertainties=False, make_kromer=False,
-    #       plot_spectra=True, show_figs=False, verbose=True).run_master()
-
-    #Master(event='05bl', case='default_L-scaled', StoN='high', flag_run_simulation=True,
-    #       flag_compute_features=True, run_uncertainties=False, make_kromer=False,
-    #       plot_spectra=True, show_figs=False, verbose=True).run_master()                                 
+    Master(event='05bl', case='default_L-scaled', StoN='high', flag_run_simulation=False,
+           flag_compute_features=True, run_uncertainties=True, make_kromer=False,
+           plot_spectra=False, show_figs=False, verbose=True).run_master()                                 
     
-    Master(event='05bl', case='L-grid', StoN='high', flag_run_simulation=True,
-           flag_compute_features=True, run_uncertainties=False, make_kromer=False,
-           plot_spectra=True, show_figs=False, verbose=True).run_master()           
-  
+    Master(event='05bl', case='L-grid', StoN='high', flag_run_simulation=False,
+           flag_compute_features=True, run_uncertainties=True, make_kromer=False,
+           plot_spectra=False, show_figs=False, verbose=True).run_master()           
+    '''
     """To be used to run multiple seeds for testing uncertainty calculation."""
-    #Master(event='fast', case='multiple', StoN='high', flag_run_simulation=True,
+    #Master(event='fast', case='multiple', StoN='high', flag_run_simulation=False,
     #       flag_compute_features=True, run_uncertainties=True, make_kromer=False,
-    #       plot_spectra=True, show_figs=False, verbose=False).run_master()      
+    #       plot_spectra=False, show_figs=False, verbose=False).run_master()      
            
+    #Master(event='11fe', case='test', StoN='very-low',
+    #       flag_run_simulation=False, flag_compute_features=False,
+    #       run_uncertainties=False, make_kromer=False,
+    #       plot_spectra=False, show_figs=False, verbose=True).run_master()
 
 
 
-    #Master(event='11fe', case='test', StoN='low', flag_run_simulation=True,
-    #       flag_compute_features=True, run_uncertainties=True, make_kromer=False,
-    #       plot_spectra=True, show_figs=False, verbose=True).run_master()      
+     
        

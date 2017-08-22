@@ -3,15 +3,14 @@
 import os                                                               
 import sys
 import shutil
-
+import pickle
 import tardis
-from tardis.gui import interface
+import numpy as np
+import matplotlib.pyplot as plt
 import tardis.tardistools.tardis_kromer_plot as tkp
 import tardis.tardistools.tardis_minimal_model as tmm
+from tardis.gui import interface
 
-import numpy as np
-import pandas as pd
-import pickle
 
 class Simulate_Spectra(object):
 
@@ -42,7 +41,7 @@ class Simulate_Spectra(object):
         available under the tardistools, which is to be installed concomitantly
         to TARDIS.
         
-    display_interface : ~boolean
+    show_figs : ~boolean
         Flag to whether or not display the default TARDIS graphical interface.
         
     verbose : ~boolean
@@ -68,13 +67,13 @@ class Simulate_Spectra(object):
     def __init__(self, created_ymlfiles_list,
                  run_uncertainties=True, smoothing_window=21,
                  N_MC_runs=3000, make_kromer=False,
-                 extinction=0., display_interface=False, verbose=True):
+                 extinction=0., show_figs=False, verbose=True):
 
         self.atom_data_dir = os.path.join(os.path.split(tardis.__file__)[0],
           'data', 'kurucz_cd23_chianti_H_He.h5')
         self.created_ymlfiles_list = created_ymlfiles_list
         self.make_kromer = make_kromer
-        self.display_interface = display_interface
+        self.show_figs = show_figs
         self.extinction = extinction
         self.verbose = verbose
 
@@ -83,8 +82,6 @@ class Simulate_Spectra(object):
         self.N_MC_runs = N_MC_runs 
 
         self.simulation = None
-        self.kromer_figures = []
-        self.hdf_files = []
 
         if self.verbose:
             print '----------------------------------------------------'
@@ -97,18 +94,17 @@ class Simulate_Spectra(object):
             print '    A TARDIS SIMULATION WILL BE CREATED FOR EACH .yml FILE.\n'
 
     def show_interface(self):
-        if self.display_interface:
+        if self.show_figs:
             interface.show(self.simulation)
 
     def make_kromer_plot(self, output, ylim=None):
         minmodel = tmm.minimal_model(mode="virtual")
         minmodel.from_interactive(self.simulation)
         plotter = tkp.tardis_kromer_plotter(minmodel, mode="virtual")
-        plotter.generate_plot(xlim=(2500,11000), ylim=(0.,3.), twinx=False)      
-        plt.tight_layout()
+        plotter.generate_plot(xlim=(1500,11000), ylim=(0.,5.), twinx=False)      
         plt.savefig(output, format='png', dpi=360)
-        #plt.show()
-        self.kromer_figures.append(output)
+        if self.show_figs:
+            plt.show()
 
     def analyse_and_add_quantities(self):
         """ Add some extra information about simulation to the .pkl
@@ -182,11 +178,11 @@ class Simulate_Spectra(object):
             self.simulation = tardis.run_tardis(
               ymlfile_fullpath, self.atom_data_dir)            
         
-            if self.display_interface:
-                interface.show(self.simulation)
+            #if self.show_figs:
+            #    interface.show(self.simulation)
             
             if self.make_kromer:
-                kromer_output = spawn_dir + file_prefix +'.png'
+                kromer_output = spawn_dir + file_prefix +'_kromer.png'
                 self.make_kromer_plot(kromer_output)
         
             D, w, f = self.analyse_and_add_quantities() 

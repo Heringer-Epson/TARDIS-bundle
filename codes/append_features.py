@@ -92,7 +92,7 @@ class Analyse_Features(object):
                 if self.run_uncertainties:
                     D = cp.Compute_Uncertainty(
                       D=D, smoothing_window=self.smoothing_window,
-                      N_MC_runs=self.N_MC_runs).run_uncertainties()       
+                      N_MC_runs=self.N_MC_runs).run_uncertainties()
 
                 if self.plot_spectra:
                     cp.Plot_Spectra(D, file_path + '.png',

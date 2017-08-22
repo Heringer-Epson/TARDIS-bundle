@@ -248,6 +248,10 @@ class Make_Inputs(object):
         Called when the 'abundance_type' variable is set to 'file'.
         """
         
+        #Make independent copy of the abun dictionary to prevent differentt_exp
+        #from modifying an already modified (decayed, or scaled) abundundaces. 
+        abun = copy.deepcopy(self.abun)
+                
         def decay_Ni_Co_Fe(time, Ni_formed):
             """Calculates the decay chain Ni->Co->Fe.
             
@@ -299,30 +303,28 @@ class Make_Inputs(object):
                 
         #Scale Ti/Cr at the expense of most abundant element.
         if TiCrs != '1.00':
-            for i in range(len(self.abun['H'])):
-                abundance_all = np.asarray([self.abun[el][i] for el in elements])
+            for i in range(len(abun['H'])):
+                abundance_all = np.asarray([abun[el][i] for el in elements])
                 el_most = elements[abundance_all.argmax()]
-                orig_Ti = float(self.abun['Ti'][i])    
-                orig_Cr = float(self.abun['Cr'][i])
-                self.abun['Ti'][i] = str(float(TiCrs) * float(self.abun['Ti'][i]))       
-                self.abun['Cr'][i] = str(float(TiCrs) * float(self.abun['Cr'][i]))             
-                self.abun[el_most][i] = str( float(self.abun[el_most][i])
-                  + (orig_Ti - float(self.abun['Ti'][i]))
-                  + (orig_Cr - float(self.abun['Cr'][i])))
+                orig_Ti = float(abun['Ti'][i])    
+                orig_Cr = float(abun['Cr'][i])
+                abun['Ti'][i] = str(float(TiCrs) * float(abun['Ti'][i]))       
+                abun['Cr'][i] = str(float(TiCrs) * float(abun['Cr'][i]))             
+                abun[el_most][i] = str(float(abun[el_most][i])
+                  + (orig_Ti - float(abun['Ti'][i]))
+                  + (orig_Cr - float(abun['Cr'][i])))
         
         #Scale Fe at the expense of most abundant element.
         if Fes != '1.00':          
-            for i in range(len(self.abun['H'])):
-                abundance_all = np.asarray([self.abun[el][i] for el in elements])
+            for i in range(len(abun['H'])):
+                abundance_all = np.asarray([abun[el][i] for el in elements])
                 el_most = elements[abundance_all.argmax()]
-                orig_Fe = float(self.abun['Fe'][i])
-                self.abun['Fe'][i] = str(float(Fes) * float(self.abun['Fe'][i]))            
-                self.abun[el_most][i] = str(float(self.abun[el_most][i])
-                  + (orig_Fe - float(self.abun['Fe'][i])))
+                orig_Fe = float(abun['Fe'][i])
+                abun['Fe'][i] = str(float(Fes) * float(abun['Fe'][i]))            
+                abun[el_most][i] = str(float(abun[el_most][i])
+                  + (orig_Fe - float(abun['Fe'][i])))
 
-        #Make independent copy of the abun dictionary to prevent different
-        #t_exp from modifying an already modified (decayed) abundances. 
-        abun = copy.deepcopy(self.abun)
+        #If both Ti and Fe, return Error.
         
         out_abundance = open(fname, 'w')
         out_abundance.write('# index Z=1 - Z=30')   
@@ -356,7 +358,7 @@ class Make_Inputs(object):
         
             """Write in the output file."""
             for element in elements:
-                out_abundance.write(' '+str(abun[element][i]))
+                out_abundance.write(' ' + str(abun[element][i]))
     
         out_abundance.close()
 
