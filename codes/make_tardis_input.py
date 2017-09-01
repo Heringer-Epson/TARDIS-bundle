@@ -207,11 +207,7 @@ class Make_Inputs(object):
         for entry in list_of_pars:
             variable, value = entry.split('|')
             if variable in self.non_default_pars:
-                if variable[0:5] != 'abun_':
                     filename += variable+'-'+value+'_'
-                else:
-                    if abs(float(value)) > 0.0001:  
-                        filename += variable+'-'+value+'_'
         filename = filename[:-1]
         return filename
 

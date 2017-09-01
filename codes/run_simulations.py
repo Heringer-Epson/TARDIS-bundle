@@ -9,8 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tardis.tardistools.tardis_kromer_plot as tkp
 import tardis.tardistools.tardis_minimal_model as tmm
+import multiprocessing as mp
 from tardis.gui import interface
-
 
 class Simulate_Spectra(object):
 
@@ -67,7 +67,8 @@ class Simulate_Spectra(object):
     def __init__(self, created_ymlfiles_list,
                  run_uncertainties=True, smoothing_window=21,
                  N_MC_runs=3000, make_kromer=False,
-                 extinction=0., show_figs=False, verbose=True):
+                 extinction=0., show_figs=False, 
+                 parallel=False, verbose=True):
 
         self.atom_data_dir = os.path.join(os.path.split(tardis.__file__)[0],
           'data', 'kurucz_cd23_chianti_H_He.h5')
@@ -75,13 +76,16 @@ class Simulate_Spectra(object):
         self.make_kromer = make_kromer
         self.show_figs = show_figs
         self.extinction = extinction
+        self.parallel = parallel
         self.verbose = verbose
 
         self.run_uncertainties = run_uncertainties
         self.smoothing_window = smoothing_window
         self.N_MC_runs = N_MC_runs 
 
-        self.simulation = None
+        #If running in parallel, force to not show figures.
+        if self.parallel:
+            self.show_figs = False
 
         if self.verbose:
             print '----------------------------------------------------'
@@ -93,20 +97,16 @@ class Simulate_Spectra(object):
             print 'DESCRIPTION:'
             print '    A TARDIS SIMULATION WILL BE CREATED FOR EACH .yml FILE.\n'
 
-    def show_interface(self):
-        if self.show_figs:
-            interface.show(self.simulation)
-
-    def make_kromer_plot(self, output, ylim=None):
+    def make_kromer_plot(self, simulation, output, ylim=None):
         minmodel = tmm.minimal_model(mode="virtual")
-        minmodel.from_interactive(self.simulation)
+        minmodel.from_interactive(simulation)
         plotter = tkp.tardis_kromer_plotter(minmodel, mode="virtual")
         plotter.generate_plot(xlim=(1500,11000), ylim=(0.,5.), twinx=False)      
         plt.savefig(output, format='png', dpi=360)
         if self.show_figs:
             plt.show()
 
-    def analyse_and_add_quantities(self):
+    def analyse_and_add_quantities(self, sim):
         """ Add some extra information about simulation to the .pkl
         output file. This output file contains not only the synthetic
         spectra but also info such as the temperature at the photosphere.
@@ -115,8 +115,8 @@ class Simulate_Spectra(object):
         """        
         D = {}
 
-        wavelength = self.simulation.runner.spectrum_virtual.wavelength[::-1]
-        flux = self.simulation.runner.spectrum_virtual.luminosity_density_lambda[::-1]                       
+        wavelength = sim.runner.spectrum_virtual.wavelength[::-1]
+        flux = sim.runner.spectrum_virtual.luminosity_density_lambda[::-1]                       
         
         #Note that the synthetic spectra are not corrected for redshift.
         #Instead, the observed spectra are. Only the wavelength and flux are
@@ -126,17 +126,17 @@ class Simulate_Spectra(object):
         D['flux_raw'] = flux.value
         D['host_redshift'] = 0.
         D['extinction'] = self.extinction
-        D['t_rad'] = self.simulation.model.t_rad.cgs
-        D['luminosity_requested'] = self.simulation.luminosity_requested.cgs
-        D['seed'] = self.simulation.runner.seed
-        D['t_inner'] = self.simulation.model.t_inner.cgs
-        D['v_inner'] = self.simulation.model.v_inner.cgs
-        D['v_outer'] = self.simulation.model.v_outer.cgs
-        D['w'] = self.simulation.model.w
-        D['time_explosion'] = self.simulation.model.time_explosion.cgs
-        D['density'] = self.simulation.model.density.cgs
-        D['r_outer'] = self.simulation.model.r_outer.cgs
-        D['volume'] = self.simulation.model.volume.cgs
+        D['t_rad'] = sim.model.t_rad.cgs
+        D['luminosity_requested'] = sim.luminosity_requested.cgs
+        D['seed'] = sim.runner.seed
+        D['t_inner'] = sim.model.t_inner.cgs
+        D['v_inner'] = sim.model.v_inner.cgs
+        D['v_outer'] = sim.model.v_outer.cgs
+        D['w'] = sim.model.w
+        D['time_explosion'] = sim.model.time_explosion.cgs
+        D['density'] = sim.model.density.cgs
+        D['r_outer'] = sim.model.r_outer.cgs
+        D['volume'] = sim.model.volume.cgs
                 
         #Add the number fraction of the ions for some of the most
         #important elements in the ejecta. The fraction is the integrated
@@ -147,11 +147,11 @@ class Simulate_Spectra(object):
                 total_number_density = 0.
                 total_ion_density = 0.
                 try:
-                    for i in range(len(self.simulation.model.density.cgs.value)):
+                    for i in range(len(sim.model.density.cgs.value)):
                         """Runs through the shells"""
-                        total_number_density += (self.simulation.plasma.
+                        total_number_density += (sim.plasma.
                           number_density[i].ix[element])            
-                        total_ion_density += (self.simulation.plasma.
+                        total_ion_density += (sim.plasma.
                           ion_number_density[i].ix[element].tolist()[ion])
                         
                     total_ion_fraction = total_ion_density / total_number_density
@@ -162,31 +162,30 @@ class Simulate_Spectra(object):
                     D['Integrated_number_density_'+str(el)] = np.nan
                     D['Integrated_ion_density_'+el+'_'+num] = np.nan
                     D['Fraction_'+el+'_'+num] = np.nan
-                
-        #Delete the simulation to make sure the memory is being freed.
-        del self.simulation
                              
         return D, wavelength, flux
 
-    def run_SIM(self):      
-        for i, ymlfile_fullpath in enumerate(self.created_ymlfiles_list):
-            spawn_dir = os.path.dirname(ymlfile_fullpath) + '/'
-            file_prefix = ymlfile_fullpath.split('/')[-1].split('.yml')[0]
-            
-            outfile = spawn_dir + file_prefix
-                
-            self.simulation = tardis.run_tardis(
-              ymlfile_fullpath, self.atom_data_dir)            
+    def run_SIM(self):
         
-            #if self.show_figs:
-            #    interface.show(self.simulation)
+        def perform_run(yml):
+            spawn_dir = os.path.dirname(yml) + '/'
+            file_prefix = yml.split('/')[-1].split('.yml')[0]            
+            outfile = spawn_dir + file_prefix
             
+            simulation = tardis.run_tardis(yml, self.atom_data_dir)  
+
+            if self.show_figs:
+                interface.show(simulation)
+
             if self.make_kromer:
                 kromer_output = spawn_dir + file_prefix +'_kromer.png'
-                self.make_kromer_plot(kromer_output)
-        
-            D, w, f = self.analyse_and_add_quantities() 
+                self.make_kromer_plot(simulation, kromer_output)
+
+            D, w, f = self.analyse_and_add_quantities(simulation) 
             
+            #Delete the simulation to make sure the memory is being freed.
+            del simulation
+
             #Create .pkl containg the spectrum and derived qquantities.
             with open(outfile + '.pkl', 'w') as out_pkl:
                 pickle.dump(D, out_pkl, protocol=pickle.HIGHEST_PROTOCOL)
@@ -196,9 +195,27 @@ class Simulate_Spectra(object):
                 for x, y in zip(w[:-1], f[:-1]):
                     out_spec.write(str(x.value) + '    ' + str(y.value) + '\n')
                 out_spec.write(str(w[-1].value) + '    ' + str(f[-1].value))
-    
+        
+        if not self.parallel:
+            for i, yml in enumerate(self.created_ymlfiles_list):
+                print '\n\nRunning yml #', str(i + 1) + '/'\
+                      + str(len(self.created_ymlfiles_list)) + '\n\n'
+                perform_run(yml)
+
+        if self.parallel:
+        
+            processes = [mp.Process(target=perform_run, args=(yml,))
+                                    for yml in self.created_ymlfiles_list]
+
+            #Start parallel processes.
+            for p in processes:
+                p.start()
+            #Exit the parallel processes.
+            for p in processes:
+                p.join()    
+        
         if self.verbose:            
             print '\n*** DONE - SUCCESSFUL RUN.'
             print '           TARDIS version used: ' \
                   + str(tardis.__version__) + '\n\n'
-            
+               

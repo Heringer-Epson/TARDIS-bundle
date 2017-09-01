@@ -59,9 +59,9 @@ class Feature_Test(object):
     def run_single(self):
 
         yml_list = Master(event='fast', case='single', StoN='low',
-                          flag_run_simulation=False, flag_compute_features=True,
+                          flag_run_simulation=True, flag_compute_features=True,
                           run_uncertainties=True, make_kromer=False,
-                          plot_spectra=False, show_figs=False,
+                          plot_spectra=True, show_figs=True,
                           verbose=False).run_master()   
 
         file_path = yml_list[0].split('.yml')[0]
@@ -71,14 +71,23 @@ class Feature_Test(object):
             ' from previous calculations made in stable versions of the code,'\
             ' when the test case - event: fast, case: single, is run with a '\
             'StoN: low.'
-            print 'pEW_f7 - current:', D['pEW_f7'], '+/-', D['pEW_unc_f7']
-            print 'pEW_f7 - default: 78.516112254 +/- 5.47670163015\n'
-            print 'depth_f7 - current:', D['depth_f7'], '+/-', D['depth_unc_f7']
-            print 'depth_f7 - default: 0.506081861312 +/- 0.0457031793996\n'
-            print 'velocity_f7 - current:', D['velocity_f7'], '+/-', D['velocity_unc_f7']
-            print 'velocity_f7 - default: -11.9338201259 +/- 0.432073982855\n'
-            print 'flag', D['pEW_flag_f7']                        
-   
+            
+            print 'pEW_f7 - current:', D['pEW_f7'], '+/-', D['pEW_unc_f7'],\
+            'flag: ', D['pEW_flag_f7']
+            print 'pEW_f7 - default: 78.516112254 +/- 5.47670163015',\
+            'flag: False\n'
+            
+            print 'depth_f7 - current:', D['depth_f7'], '+/-', D['depth_unc_f7'],\
+            'flag:', D['depth_flag_f7']
+            print 'depth_f7 - default: 0.506081861312 +/- 0.0457031793996',\
+            'flag: False\n'
+            
+            print 'velocity_f7 - current:', D['velocity_f7'], '+/-',\
+            D['velocity_unc_f7'], 'flag: ', D['velocity_flag_f7']
+            
+            print 'velocity_f7 - default: -11.9338201259 +/- 0.432073982855',\
+            'flag: False\n'
+            
     def run_sine(self):
         #In the following, the chosen analytical function is sin(x). For
         #the feature to be computed, the signal has to be in a wavelength
@@ -243,15 +252,30 @@ class Feature_Test(object):
           + 'reasonable spread) and different seeds. Depth and velocity\n'
           + 'calculation show worse agreement. No need to correct\n'
           + 'for 20% in the pEW uncertainty, as claimed in paper I.\n\n\n')
-                
+          
+    def run_kromer(self):
+
+        #Master(event='fast', case='single', StoN='very-low',
+        #       flag_run_simulation=True, flag_compute_features=False,
+        #       run_uncertainties=False, make_kromer=True,
+        #       plot_spectra=False, show_figs=True,
+        #       verbose=False).run_master()   
+
+        Master(event='11fe', case='test', StoN='very-low',
+               flag_run_simulation=True, flag_compute_features=False,
+               run_uncertainties=False, make_kromer=True,
+               plot_spectra=False, show_figs=True, verbose=False).run_master()
+                       
     def run_test(self):
         if self.test_case == 'single':
-            self.run_single()    
+            self.run_single()            
         if self.test_case == 'sine':
             self.run_sine()       
         if self.test_case == 'seeds':
             self.run_seeds()
-
+        if self.test_case == 'kromer':
+            self.run_kromer()    
+            
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= INPUTS =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=                          
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
@@ -343,6 +367,7 @@ class Input_Test(object):
 #Input_Test(test_case='05bl')
 
 Feature_Test(test_case='single')
+#Feature_Test(test_case='kromer')
 #Feature_Test(test_case='sine', quantity='pEW', feature_number='f7',
 #              noise=0.05, spectra_grid=2)
 
