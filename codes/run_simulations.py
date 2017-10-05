@@ -2,8 +2,9 @@
 
 import os                                                               
 import sys
+import time
 import shutil
-import pickle
+import cPickle
 import tardis
 import numpy as np
 import matplotlib.pyplot as plt
@@ -116,7 +117,7 @@ class Simulate_Spectra(object):
         D = {}
 
         wavelength = sim.runner.spectrum_virtual.wavelength[::-1]
-        flux = sim.runner.spectrum_virtual.luminosity_density_lambda[::-1]                       
+        flux = sim.runner.spectrum_virtual.luminosity_density_lambda[::-1]
         
         #Note that the synthetic spectra are not corrected for redshift.
         #Instead, the observed spectra are. Only the wavelength and flux are
@@ -135,6 +136,7 @@ class Simulate_Spectra(object):
         D['w'] = sim.model.w
         D['time_explosion'] = sim.model.time_explosion.cgs
         D['density'] = sim.model.density.cgs
+        D['r_inner'] = sim.model.r_inner.cgs
         D['r_outer'] = sim.model.r_outer.cgs
         D['volume'] = sim.model.volume.cgs
                 
@@ -153,20 +155,45 @@ class Simulate_Spectra(object):
                           number_density[i].ix[element])            
                         total_ion_density += (sim.plasma.
                           ion_number_density[i].ix[element].tolist()[ion])
-                        
+                    
                     total_ion_fraction = total_ion_density / total_number_density
-                    D['Integrated_number_density_'+str(el)] = total_ion_density
-                    D['Integrated_ion_density_'+el+'_'+num] = total_number_density
+                    D['Integrated_number_density_'+str(el)] = total_number_density
+                    D['Integrated_ion_density_'+el+'_'+num] = total_ion_density
                     D['Fraction_'+el+'_'+num] = total_ion_fraction
                 except:
                     D['Integrated_number_density_'+str(el)] = np.nan
                     D['Integrated_ion_density_'+el+'_'+num] = np.nan
                     D['Fraction_'+el+'_'+num] = np.nan
+
+        #for i in range(len(sim.model.density.cgs.value)):
+            
+            #Fix this.
+            #C_II_10 = sim.plasma.level_number_density[i].ix[6].ix[1].ix[10] 
+            
+            #print ('T = ', sim.model.t_rad.cgs.value[i], 'K'\
+            #       'C_II at level 10 # density = ', (C_II_10 / D['Integrated_number_density_C']))
+             
                              
+        ###Tests with plasma
+        #print dir(sim)
+        #print dir(sim.plasma)
+        #print sim.plasma.ion_number_density
+        #print sim.plasma.number_density
+        #print dir(sim.plasma.atomic_data)
+        #print sim.plasma.atomic_data.levels
+        #print sim.plasma.atomic_data.ionization_data
+        #print sim.plasma.atomic_data.lines
+        
+        #print sim.plasma.level_number_density[shell].ix[El#].ix[ion#].ix[level#]
+        #print sim.plasma.level_number_density[0].ix[6].ix[1].ix[10]
+        #print sim.plasma.level_number_density[0].ix[6].ix[1]
+                
         return D, wavelength, flux
 
     def run_SIM(self):
         
+        #Function to actually run the simulation -- needed to modularize the
+        #code and potentially run simulations in parallel.
         def perform_run(yml):
             spawn_dir = os.path.dirname(yml) + '/'
             file_prefix = yml.split('/')[-1].split('.yml')[0]            
@@ -183,24 +210,43 @@ class Simulate_Spectra(object):
 
             D, w, f = self.analyse_and_add_quantities(simulation) 
             
-            #Delete the simulation to make sure the memory is being freed.
-            del simulation
-
+            #Save simulation as hdf.
+            simulation.to_hdf(outfile + '.hdf')
+            import pandas as pd
+            
             #Create .pkl containg the spectrum and derived qquantities.
             with open(outfile + '.pkl', 'w') as out_pkl:
-                pickle.dump(D, out_pkl, protocol=pickle.HIGHEST_PROTOCOL)
-
+                cPickle.dump(D, out_pkl, protocol=cPickle.HIGHEST_PROTOCOL)            
+            
             #Create .dat file containg spectra only for uploading into WISEREP.
             with open(outfile + '.dat'  ,'w') as out_spec:
                 for x, y in zip(w[:-1], f[:-1]):
                     out_spec.write(str(x.value) + '    ' + str(y.value) + '\n')
                 out_spec.write(str(w[-1].value) + '    ' + str(f[-1].value))
+
+            #Delete the simulation to make sure the memory is being freed.
+            del simulation
         
+        #Instructions to call function that will run tardis.
         if not self.parallel:
+            
+            time_start = time.time()
+            
             for i, yml in enumerate(self.created_ymlfiles_list):
+                
+                #Verbose information.
                 print '\n\nRunning yml #', str(i + 1) + '/'\
-                      + str(len(self.created_ymlfiles_list)) + '\n\n'
+                      + str(len(self.created_ymlfiles_list))
+                
+                if i != 0:
+                    completed_sims = float(i)
+                    avg_sim_time = elapsed_time / completed_sims / 3600.
+                    estimated_time = (len(yml) - completed_sims) * avg_sim_time                    
+                    estimated_time = str(format(estimated_time, '.1f'))
+                    print '..Estimated remaining time: ' + estimated_time + 'h\n\n'    
+                
                 perform_run(yml)
+                elapsed_time = time.time() - time_start
 
         if self.parallel:
         

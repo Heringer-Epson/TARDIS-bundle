@@ -11,6 +11,38 @@ from master_run import Master
 from append_features import Analyse_Features
 from input_pars import Input_Parameters as class_input
 
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= QUICK TEST =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=                          
+#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
+
+class Quick_Test(object):
+    """THIS CODE CHECKS WHETHER THE CALCULATION OF FEATURES SUCH AS PEW AND
+    DEPTH ARE BEING DONE PROPERLY. CURRENT OPTIONS ALLOW TO COMPARE VALUES
+    AGAINST THE ANALYTICAL EXPECTATION OF A SIMPLE SINOIDAL CASE OR AGAINST
+    A PREVIOUSLY MEASURED SPECTRA.
+
+    Parameters
+    ----------
+    test_case : ~str
+        Defines which test case to run. Implemented: 'sine' or 'tardis'.
+    """
+    
+    def __init__(self, test_case='quick'):     
+        
+        self.test_case = test_case        
+        self.run_test()        
+        
+    def run_quick(self):
+
+        yml_list = Master(event='hypo', case='quick', StoN='very-low',
+                          flag_run_simulation=True, flag_compute_features=True,
+                          run_uncertainties=False, make_kromer=False,
+                          plot_spectra=False, show_figs=True,
+                          verbose=True).run_master()   
+
+    def run_test(self):
+        if self.test_case == 'quick':
+            self.run_quick()                
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= FEATURES =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=                          
@@ -61,7 +93,7 @@ class Feature_Test(object):
         yml_list = Master(event='fast', case='single', StoN='low',
                           flag_run_simulation=True, flag_compute_features=True,
                           run_uncertainties=True, make_kromer=False,
-                          plot_spectra=True, show_figs=True,
+                          plot_spectra=False, show_figs=False,
                           verbose=False).run_master()   
 
         file_path = yml_list[0].split('.yml')[0]
@@ -362,11 +394,13 @@ class Input_Test(object):
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= MAIN =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=                          
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
+
+Quick_Test(test_case='quick')
             
 #Input_Test(test_case='11fe')      
 #Input_Test(test_case='05bl')
 
-Feature_Test(test_case='single')
+#Feature_Test(test_case='single')
 #Feature_Test(test_case='kromer')
 #Feature_Test(test_case='sine', quantity='pEW', feature_number='f7',
 #              noise=0.05, spectra_grid=2)

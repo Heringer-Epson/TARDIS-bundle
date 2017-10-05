@@ -92,6 +92,7 @@ class Make_Inputs(object):
         self.MASTER = {}
         
         self.MASTER['loglum'] = inputs.luminosity
+        self.MASTER['temperature_requested'] = inputs.temperature_requested
         self.MASTER['time_explosion'] = inputs.time_explosion
         self.distance = inputs.distance
                 
@@ -482,10 +483,13 @@ class Make_Inputs(object):
                 yml_file.write('supernova:\n')
                 yml_file.write('    luminosity_requested: '
                                     +PARS['loglum']+' log_lsun\n')
+                if PARS['temperature_requested'] != 'blank': 
+                    yml_file.write('    temperature_requested: '
+                                   +PARS['temperature_requested']+' K\n')
                 yml_file.write('    time_explosion: '
                                     +PARS['time_explosion']+' day\n')
                 if self.distance != 'blank':
-                    yml_file.write('distance: ' + self.distance + ' Mpc\n')  
+                    yml_file.write('    distance: ' + self.distance + '\n')  
                 yml_file.write('\n')
                 yml_file.write('atom_data: ' + self.atomic_data + '\n')
                 yml_file.write('\n')
