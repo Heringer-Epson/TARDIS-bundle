@@ -90,10 +90,27 @@ if __name__ == '__main__':
 
     """Tests"""
 
-    Master(event='11fe_early', case='grid_no-C', StoN='medium-high', flag_run_simulation=False,
-           flag_compute_features=True, run_uncertainties=False, make_kromer=False,
-           plot_spectra=False, show_figs=False, parallel=False,
+    Master(event='11fe', case='early_2D-grid', StoN='high',
+           flag_run_simulation=False, flag_compute_features=True,
+           run_uncertainties=True, make_kromer=False,
+           plot_spectra=True, show_figs=False, parallel=False,
            verbose=True).run_master()  
+               
+    #Master(event='11fe', case='early_2D-grid_no-C', StoN='high',
+    #       flag_run_simulation=True, flag_compute_features=True,
+    #       run_uncertainties=True, make_kromer=False,
+    #       plot_spectra=True, show_figs=False, parallel=False,
+    #       verbose=True).run_master()     
+    
+    #Master(event='11fe', case='test', StoN='low', flag_run_simulation=True,
+    #       flag_compute_features=True, run_uncertainties=True, make_kromer=False,
+    #       plot_spectra=True, show_figs=False, parallel=False,
+    #       verbose=True).run_master()  
+
+    #Master(event='11fe_early', case='grid_no-C', StoN='medium-high', flag_run_simulation=False,
+    #       flag_compute_features=True, run_uncertainties=False, make_kromer=False,
+    #       plot_spectra=False, show_figs=False, parallel=False,
+    #       verbose=True).run_master()  
 
 
     #Master(event='11fe', case='kromer_L-scaled', StoN='medium', flag_run_simulation=True,
