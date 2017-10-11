@@ -287,8 +287,13 @@ class Make_11fe_file(object):
         #abundances change.)
         for i, v in enumerate(self.velocity_coarse):
             plt.axvline(x=v, color='k', alpha=0.5, lw=1., ls=':')
-            print 'Shell ' + str(i + 1) + ' starts at v = ' + str(v) + ' [km/s]'
+            print 'Shell ' + str(i) + ' starts at v = ' + str(v) + ' [km/s]'
 
+        #Print requested velocities layers used in the simulations.
+        print '\n\n'
+        for i, v in  enumerate(self.velocity_requested):
+            print 'layer ' + str(i) + ' starts at v = ' + str(v) + ' [km/s]'
+        
         #Add legend
         ax.legend(frameon=False, fontsize=20., numpoints=1, ncol=1,
                   labelspacing=0.05, loc='best')          

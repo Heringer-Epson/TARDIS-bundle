@@ -113,19 +113,6 @@ class Make_Inputs(object):
         self.MASTER['exponent'] = inputs.exponent
         self.MASTER['density_value'] = inputs.density_value
         
-        self.MASTER['abun_O'] = inputs.abun_O
-        self.MASTER['abun_C'] = inputs.abun_C
-        self.MASTER['abun_Na'] = inputs.abun_Na
-        self.MASTER['abun_Mg'] = inputs.abun_Mg
-        self.MASTER['abun_Si'] = inputs.abun_Si
-        self.MASTER['abun_S'] = inputs.abun_S
-        self.MASTER['abun_Ar'] = inputs.abun_Ar
-        self.MASTER['abun_Ca'] = inputs.abun_Ca
-        self.MASTER['abun_Ti'] = inputs.abun_Ti
-        self.MASTER['abun_Fe'] = inputs.abun_Fe
-        self.MASTER['abun_Co'] = inputs.abun_Co
-        self.MASTER['abun_Ni'] = inputs.abun_Ni
-        
         self.MASTER['seed'] = inputs.seeds
         self.MASTER['num_packs'] = inputs.num_packs
         self.MASTER['iterations'] = inputs.iterations
@@ -283,10 +270,8 @@ class Make_Inputs(object):
                 abundance_all = np.asarray([abun[el][i] for el in self.elements])
                 abundance_all = np.nan_to_num(abundance_all)
                 el_most = self.elements[abundance_all.argmax()]
-                #print el_most
                 orig_abun = float(abun[element][i])
                 new_abun = scale * orig_abun
-                #print i, scale, orig_abun, new_abun
                                 
                 #Update abundances.
                 abun[element][i] = str(new_abun)            
@@ -346,13 +331,14 @@ class Make_Inputs(object):
             
             return Ni_change, Co_change, Fe_change
 
-        for i, velocity in enumerate(self.velocity_array):
+        #for i, velocity in enumerate(self.velocity_array):
+        for i in range(len(abun['Si'])):
             
             """Compute changes due to decay of Ni and Co."""     
             Ni_initial = float(abun['Ni0'][i])
             Ni_change, Co_change, Fe_change = decay_Ni_Co_Fe(
                                             float(time),Ni_initial)
-                            
+
             abun['Ni'][i] = str(format(float(abun['Ni0'][i])
             + Ni_change, '.6f'))  
             
@@ -367,9 +353,9 @@ class Make_Inputs(object):
             for element in self.elements:
                 sum_elem += float(abun[element][i])
             if abs(sum_elem - 1.) > 1.e-5:
-                raise ValueError("Error: In index %s , velocity \
-                = %s , the abundance does not add to 1. Needs %s"
-                % (i, velocity, 1-sum_elem))      
+                raise ValueError("Error: In index %s,\
+                the abundance does not add to 1. Needs %s"
+                % (i, 1-sum_elem))      
 
         return abun
 
@@ -503,12 +489,9 @@ class Make_Inputs(object):
                 yml_file.write('    abundances:\n')
                 yml_file.write('        type: ' + self.abundance_type + '\n')
                 if self.abundance_type == 'uniform':
-                    for entry in PARS.keys():
-                        if entry[0:5] == 'abun_':
-                            if float(PARS[entry]) > 1.e-6:
-                                element = entry.split('abun_')[1]
-                                yml_file.write('        '+element
-                                               +': '+PARS[entry]+'\n')
+                    for el in self.elements:
+                        yml_file.write('        ' + el
+                                       + ': ' + self.abun[el][0] + '\n')                        
                 elif self.abundance_type == 'file':
                     yml_file.write('        filename: ' + self.abun_fpath + '\n') 
                     yml_file.write('        filetype: simple_ascii\n')              
