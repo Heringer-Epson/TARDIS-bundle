@@ -101,12 +101,14 @@ class Make_Inputs(object):
         self.MASTER['velocity_stop'] = inputs.velocity_stop
         self.MASTER['structure_num'] = inputs.structure_num
 
-        #Up to two elements whose mass fraction will be be scaled in
+        #Up to two elements whose mass fraction will be be scaled/added in
         #a region of the ejecta.
         self.el1_scaling = inputs.el1_scaling
         self.el2_scaling = inputs.el2_scaling
+        self.el_adding = inputs.el_adding
         self.MASTER[self.el1_scaling['el']] = inputs.el1_scaling['factors']
         self.MASTER[self.el2_scaling['el']] = inputs.el2_scaling['factors']
+        self.MASTER[self.el_adding['el']] = inputs.el_adding['add']
                 
         self.MASTER['rho_0'] = inputs.rho_0
         self.MASTER['v_0'] = inputs.v_0
@@ -212,9 +214,10 @@ class Make_Inputs(object):
             read_every = 2
             t_exp2str = {'11.0': 'm6', '12.0': 'm5', '14.0': 'm3', '21.8': 'p48',
                          '29.9': 'p129'}                
-            phase = t_exp2str[t_exp]
+            phase = t_exp2str[time]
             fpath = ('./../INPUT_FILES/Hachinger_2005bl/models-05bl-w7e0.7/' 
-                            + 'SN2005bl_' + phase + '/' + 'abuplot.dat')
+                     + 'SN2005bl_' + phase + '/' + 'abuplot.dat')
+            self.time_0 = str(float(time) * 24. * 3600.) + ' s'
                 
         elif event == '11fe':
             read_every = 1 
@@ -233,23 +236,17 @@ class Make_Inputs(object):
                 
         #Get abundances.
         abun = {} 
-        el_loop = self.elements + ['Fe0', 'Ni0']
         
-        for el in el_loop:
+        for el in self.elements:
             abun[el] = np.zeros(len(velocity_array))
         
         for i, velocity in enumerate(velocity_array):
             sum_elem = 0.               
-            for j, el in enumerate(el_loop):
+            for j, el in enumerate(self.elements):
                 
                 abun_value = float(rows[i][4 + j])
                 abun[el][i] = abun_value
                 sum_elem += abun_value
-
-            if abs(sum_elem - 1.) > 1.e-5:
-                raise ValueError("Error: In index %s , velocity \
-                = %s , the abundance does not add to 1. Needs %s"
-                % (i, velocity, 1. - sum_elem))        
 
         return velocity_array, density_array, abun
 
@@ -279,6 +276,32 @@ class Make_Inputs(object):
                                        + (orig_abun - new_abun))        
         
         return abun
+
+    def add_abun(self, inp_abun, el_adding, parcel):
+
+        element = el_adding['el']
+        v_start = el_adding['v_start']
+        #Make independent copy of the abun dictionary to prevent differentt_exp
+        #from modifying an already modified (decayed, or scaled) abundundaces. 
+        abun = copy.deepcopy(inp_abun)
+    
+        if element != 'None':
+            shells = np.arange(0, len(self.velocity_array), 1)
+            condition = (self.velocity_array >= v_start)
+            shell_window = shells[condition]
+            
+            for i in shell_window:
+                abundance_all = np.asarray([abun[el][i] for el in self.elements])
+                abundance_all = np.nan_to_num(abundance_all)
+                el_most = self.elements[abundance_all.argmax()]
+                orig_abun = float(abun[element][i])
+                new_abun = orig_abun + parcel
+                                                
+                #Update abundances.
+                abun[element][i] = str(new_abun)            
+                abun[el_most][i] = str(float(abun[el_most][i]) + (orig_abun - new_abun))        
+
+        return abun            
         
     def compute_Ni_decay(self, inp_abun, time):
         
@@ -342,20 +365,21 @@ class Make_Inputs(object):
             abun['Ni'][i] = str(format(float(abun['Ni0'][i])
             + Ni_change, '.6f'))  
             
-            abun['Co'][i] = str(format(float(abun['Co'][i])
-            + Co_change, '.6f'))  
+            #Note that all of the Cobalt is from the decay of Ni and therefore
+            #values passed in abun[Co] are always ignored. 
+            abun['Co'][i] = str(format(Co_change, '.6f'))  
             
             abun['Fe'][i] = str(format(float(abun['Fe0'][i])
             + Fe_change, '.6f'))  
 
             """Test if abundances add up to 1 in each layer."""
             sum_elem = 0.    
-            for element in self.elements:
+            for element in self.elements[:-2]:
                 sum_elem += float(abun[element][i])
             if abs(sum_elem - 1.) > 1.e-5:
                 raise ValueError("Error: In index %s,\
                 the abundance does not add to 1. Needs %s"
-                % (i, 1-sum_elem))      
+                % (i, 1-sum_elem))
 
         return abun
 
@@ -372,10 +396,10 @@ class Make_Inputs(object):
             N_shells = len(abun['H'])
             for i in range(N_shells):
                 out_abundance.write('\n' + str(i))
-                for el in self.elements:
+                for el in self.elements[:-2]:
                     out_abundance.write(' ' + str(abun[el][i]))
                                     
-    def control_structure_files(self, spawn_dir, t_exp, scale1, scale2):
+    def control_structure_files(self, spawn_dir, t_exp, scale1, scale2, parcel):
         """This function uses the name of the input_pars_X.py file to determine
         whether to make a density and an abundance files. Note that
         input_pars_Hach.py has its own routine to read the data provided by
@@ -396,9 +420,12 @@ class Make_Inputs(object):
         #Call routine to scale the mass fraction of elements.
         abun_up1 = self.scale_abun(self.abun, self.el1_scaling, scale1)
         abun_up2 = self.scale_abun(abun_up1, self.el2_scaling, scale2)
+
+        #Call routine to add the mass fraction of elements.
+        abun_up3 = self.add_abun(abun_up2, self.el_adding, parcel)
         
         #Call routine to compute the decay of 56Ni.
-        abun_decayed = self.compute_Ni_decay(abun_up2, t_exp)
+        abun_decayed = self.compute_Ni_decay(abun_up3, t_exp)
             
         #If necessary, write abundance and density files.
         if self.structure_type == 'file' and self.abundance_type == 'file':                
@@ -429,7 +456,8 @@ class Make_Inputs(object):
                 os.mkdir(spawn_dir)
             self.control_structure_files(spawn_dir, PARS['time_explosion'],
                                          float(PARS[self.el1_scaling['el']]),
-                                         float(PARS[self.el2_scaling['el']]))
+                                         float(PARS[self.el2_scaling['el']]),
+                                         float(PARS[self.el_adding['el']]))
         
             if self.verbose:
                 print '    CREATED: ' + ymlfile_fullpath
@@ -489,7 +517,7 @@ class Make_Inputs(object):
                 yml_file.write('    abundances:\n')
                 yml_file.write('        type: ' + self.abundance_type + '\n')
                 if self.abundance_type == 'uniform':
-                    for el in self.elements:
+                    for el in self.elements[:-2]:
                         yml_file.write('        ' + el
                                        + ': ' + self.abun[el][0] + '\n')                        
                 elif self.abundance_type == 'file':
