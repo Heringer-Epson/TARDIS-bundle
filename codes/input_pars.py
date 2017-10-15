@@ -215,16 +215,30 @@ class Input_Parameters(object):
 
             #Compute spectra with standard settings, where L is scaled by
             #1, 1/2, 1/3 and 1/4.
-            elif case == 'default_L-scaled_adddedFe':    
-                self.subdir = '05bl_default_L-scaled_adddedFe/'
-                self.el_adding = {'el': 'Fe0', 'v_start': 15373., 'add': ['+0.0003'] * 9}
+            elif case == 'default_L-scaled_extra0.01Fe':    
+                self.subdir = '05bl_default_L-scaled_extra0.01Fe/'
+                self.el_adding = {'el': 'Fe0', 'v_start': 8000., 'add': ['+0.01'] * 6}
                 self.luminosity = []
-                lum = [8.520, 8.617, 8.745, 8.861]
-                for scale in [0.8, 1., 2.]:
+                lum = [8.617, 8.745, 8.861]
+                for scale in [0.8, 1.]:
                     self.luminosity += [str(format(np.log10(10.**l * scale), '.3f')) for l in list(lum)]                
-                self.time_explosion = ['11.0', '12.0', '14.0', '21.8'] * 3
-                self.velocity_start = ['8350', '8100', '7600', '6800'] * 3
-                self.line_interaction = ['macroatom'] * 12
+                self.time_explosion = ['12.0', '14.0', '21.8'] * 2
+                self.velocity_start = ['8100', '7600', '6800'] * 2
+                self.line_interaction = ['macroatom'] * 6
+
+            #Compute spectra with standard settings, where L is scaled by
+            #1, 1/2, 1/3 and 1/4.
+            elif case == 'default_L-scaled_extra0.01Fe-outer':    
+                self.subdir = '05bl_default_L-scaled_extra0.01Fe-outer/'
+                self.el_adding = {'el': 'Fe0', 'v_start': 15000., 'add': ['+0.01'] * 3}
+                self.luminosity = []
+                lum = [8.617, 8.745, 8.861]
+                for scale in [1.]:
+                    self.luminosity += [str(format(np.log10(10.**l * scale), '.3f')) for l in list(lum)]                
+                self.time_explosion = ['12.0', '14.0', '21.8'] * 1
+                self.velocity_start = ['8100', '7600', '6800'] * 1
+                self.line_interaction = ['macroatom'] * 3
+
 
             #Test case.
             elif case == 'test':       
@@ -308,7 +322,7 @@ class Input_Parameters(object):
             #Compute spectra with standard settings, where L is scaled by
             #1, 1/2, 1/3 and 1/4.
             elif case == 'default_L-scaled':    
-                self.subdir = '11fe_default_L-scaled_new/'
+                self.subdir = '11fe_default_L-scaled_UP/'
                 self.luminosity = []
                 lum = [np.log10(l) for l in [0.08e9, 0.32e9, 1.1e9, 2.3e9, 3.2e9, 3.5e9, 3.2e9, 2.3e9]]
                 for scale in [1., 0.5, 0.33, 0.25]:
@@ -320,7 +334,7 @@ class Input_Parameters(object):
                 
             #Used to compute L-grid.
             elif case == 'L-grid':    
-                self.subdir = '11fe_L-grid/'   
+                self.subdir = '11fe_L-grid_UP/'   
                 self.luminosity = [str(format(l, '.3f')) for l in np.log10(np.logspace(8.544, 9.72, 20))]
                 self.luminosity = self.luminosity * 2 #One for each line_int mode.
                 self.time_explosion = '19.1'    
@@ -490,9 +504,32 @@ class Input_Parameters(object):
                                     'factors': Fe_scaling}               
                 self.el2_scaling = {'el': 'C', 'v_start': 13100.,
                                     'factors': '0.0'}   
+
+            elif case == '6d_2D-grid_v19590':
+                self.subdir = '11fe_2D-grid_6d_v19590_UP/'     
+
+                L_scal = np.arange(0.2, 1.61, 0.1)
+                self.luminosity = [self.lum2loglum(0.32e9 * l) for l in L_scal]                
+                self.luminosity = self.luminosity * 10
+
+                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00',
+                          '10.00', '20.00', '50.00', '100.00']
+                                
+                #By default, Fe will be scaled at the expense of the most 
+                #abundant element, which is Si in this case.
+                Fe_scaling = []
+                for s in scales:                    
+                    Fe_scaling += [s] * 15
+                                            
+                self.time_explosion = '5.9'    
+                self.velocity_start = '12400'
+                self.line_interaction = ['macroatom'] * 150  
+                self.el1_scaling = {'el': 'Fe0', 'v_start': 19590.,
+                                    'factors': Fe_scaling} 
             
-            elif case == '12d_2D-grid':
-                self.subdir = '12d-carbon-grid_kromer_new2/'     
+            
+            elif case == '12d_2D-grid_v19590':
+                self.subdir = '11fe_2D-grid_12d_v19590_UP/'     
 
                 L_scal = np.arange(0.2, 1.61, 0.1)
                 self.luminosity = [self.lum2loglum(2.3e9 * l) for l in L_scal]                
@@ -510,11 +547,11 @@ class Input_Parameters(object):
                 self.time_explosion = '12.1'    
                 self.velocity_start = '10700'
                 self.line_interaction = ['macroatom'] * 150  
-                self.el1_scaling = {'el': 'Fe0', 'v_start': 17000.,
+                self.el1_scaling = {'el': 'Fe0', 'v_start': 19590.,
                                     'factors': Fe_scaling} 
 
-            elif case == '19d_2D-grid':
-                self.subdir = '19d-carbon-grid_new2/'     
+            elif case == '19d_2D-grid_v19590':
+                self.subdir = '11fe_2D-grid_19d_v19590_UP/'     
 
                 L_scal = np.arange(0.2, 1.61, 0.1)
                 self.luminosity = [self.lum2loglum(3.5e9 * l) for l in L_scal]                
@@ -532,8 +569,82 @@ class Input_Parameters(object):
                 self.time_explosion = '19.1'    
                 self.velocity_start = '7850'
                 self.line_interaction = ['macroatom'] * 150  
-                self.el1_scaling = {'el': 'Fe0', 'v_start': 17000.,
+                self.el1_scaling = {'el': 'Fe0', 'v_start': 19780.,
                                     'factors': Fe_scaling} 
+            
+            
+
+
+            elif case == '6d_2D-grid_v13400':
+                self.subdir = '11fe_2D-grid_6d_v13400_UP/'     
+
+                L_scal = np.arange(0.2, 1.61, 0.1)
+                self.luminosity = [self.lum2loglum(0.32e9 * l) for l in L_scal]                
+                self.luminosity = self.luminosity * 10
+
+                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00',
+                          '10.00', '20.00', '50.00', '100.00']
+                                
+                #By default, Fe will be scaled at the expense of the most 
+                #abundant element, which is Si in this case.
+                Fe_scaling = []
+                for s in scales:                    
+                    Fe_scaling += [s] * 15
+                                            
+                self.time_explosion = '5.9'    
+                self.velocity_start = '12400'
+                self.line_interaction = ['macroatom'] * 150  
+                self.el1_scaling = {'el': 'Fe0', 'v_start': 13400.,
+                                    'factors': Fe_scaling} 
+            
+            
+            elif case == '12d_2D-grid_v13400':
+                self.subdir = '11fe_2D-grid_12d_v13400_UP/'     
+
+                L_scal = np.arange(0.2, 1.61, 0.1)
+                self.luminosity = [self.lum2loglum(2.3e9 * l) for l in L_scal]                
+                self.luminosity = self.luminosity * 10
+
+                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00',
+                          '10.00', '20.00', '50.00', '100.00']
+                                
+                #By default, Fe will be scaled at the expense of the most 
+                #abundant element, which is Si in this case.
+                Fe_scaling = []
+                for s in scales:                    
+                    Fe_scaling += [s] * 15
+                                            
+                self.time_explosion = '12.1'    
+                self.velocity_start = '10700'
+                self.line_interaction = ['macroatom'] * 150  
+                self.el1_scaling = {'el': 'Fe0', 'v_start': 13400.,
+                                    'factors': Fe_scaling} 
+
+            elif case == '19d_2D-grid_v13400':
+                self.subdir = '11fe_2D-grid_19d_v13400_UP/'     
+
+                L_scal = np.arange(0.2, 1.61, 0.1)
+                self.luminosity = [self.lum2loglum(3.5e9 * l) for l in L_scal]                
+                self.luminosity = self.luminosity * 10
+
+                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00',
+                          '10.00', '20.00', '50.00', '100.00']
+                                
+                #By default, Fe will be scaled at the expense of the most 
+                #abundant element, which is Si in this case.
+                Fe_scaling = []
+                for s in scales:                    
+                    Fe_scaling += [s] * 15
+                                            
+                self.time_explosion = '19.1'    
+                self.velocity_start = '7850'
+                self.line_interaction = ['macroatom'] * 150  
+                self.el1_scaling = {'el': 'Fe0', 'v_start': 13400.,
+                                    'factors': Fe_scaling}             
+            
+            
+            
+            
             
             
             #Test case.

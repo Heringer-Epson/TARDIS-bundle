@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from scipy.interpolate import interp1d
+from scipy.integrate import cumtrapz
 from astropy import constants as const
 from matplotlib.ticker import MultipleLocator
 
@@ -81,15 +82,10 @@ class Make_11fe_file(object):
     def compute_mass(self):
         time = 100.
         km2cm = 1.e5
-
-        volume_array = (4./3. * np.pi * time**3. * km2cm**3. *
-                        (np.power(self.velocity_fine[1:], 3)
-                        - np.power(self.velocity_fine[0:-1], 3)))
         
-        avg_density = (self.density_fine[0:-1] + self.density_fine[1:]) / 2.
-        
-        self.mass_fine = np.multiply(avg_density, volume_array)
-        self.mass_fine = np.cumsum(self.mass_fine) / M_sun
+        r_array = self.velocity_fine * time * km2cm
+        int_array = 4. * np.pi * r_array**2. * self.density_fine
+        self.mass_fine = cumtrapz(int_array, r_array) / M_sun
         
     def interpolate_abun(self, Mass, Abun):
         
@@ -103,7 +99,7 @@ class Make_11fe_file(object):
             Abun[0] = 0.
             
         #For the interpolation to always work, extrapolate the first and last
-        #values to masses 0 and 1.5,m by conserving the extreme abundances.
+        #values to masses 0 and 1.5m by conserving the extreme abundances.
         Mass = np.asarray([0.] + Mass + [1.5])
         Abun = np.asarray([Abun[0]] + Abun + [Abun[-1]])
         
@@ -139,8 +135,8 @@ class Make_11fe_file(object):
                     abun.append(float(column[1]))                        
 
             mass2abun = self.interpolate_abun(mass, abun)
-
             self.abun_coarse[el] = mass2abun(self.mass_coarse) / 100.
+        
         self.N_coarse_shells = len(self.mass_coarse)    
 
     def enforce_abun_normalization(self):
@@ -210,10 +206,10 @@ class Make_11fe_file(object):
             for v in self.velocity_requested:
                 condition = (self.velocity_coarse <= v)
                 if not True in condition:
-                    idx_zone = -1
+                    idx_zone = 0
                 else:    
                     idx_zone = self.velocity_coarse[condition].argmax()
-                
+
                 self.abun_requested[element].append(
                   self.format_abun_format[element][idx_zone])
                         
@@ -251,7 +247,7 @@ class Make_11fe_file(object):
                     out.write(' ' + str(format(self.abun_requested[el][i], '.6f')))
                 out.write(' \n')    
 
-    def plot_abundances(self):
+    def plot_abundances_xvel(self):
 
         #Arrange figure frame.
         fs = 26.
@@ -261,7 +257,7 @@ class Make_11fe_file(object):
         ax.set_xlabel(x_label, fontsize=fs)
         ax.set_ylabel(y_label, fontsize=fs)
         ax.set_yscale('log')
-        ax.set_xlim(2500., 21000.)
+        ax.set_xlim(2500., 23000.)
         ax.set_ylim(1.e-4, 1.1)
         ax.tick_params(axis='y', which='major', labelsize=fs, pad=8)       
         ax.tick_params(axis='x', which='major', labelsize=fs, pad=8)
@@ -302,7 +298,70 @@ class Make_11fe_file(object):
 
         #Save and show figure.
         directory = './../INPUT_FILES/Mazzali_2011fe/'
-        plt.savefig(directory + 'Fig_11fe_abundance.png', format='png')
+        plt.savefig(directory + 'Fig_11fe_abundance_xvel.png', format='png')
+        plt.show()    
+
+    def plot_abundances_xmass(self):
+
+        #Arrange figure frame.
+        fs = 26.
+        fig, ax = plt.subplots(figsize=(14,8))
+        x_label = r'enclosed mass $\rm{[M_\odot]}$'
+        y_label = r'$\rm{mass\ \ fraction}$'
+        ax.set_xlabel(x_label, fontsize=fs)
+        ax.set_ylabel(y_label, fontsize=fs)
+        ax.set_yscale('log')
+        ax.set_xlim(0., 1.4)
+        ax.set_ylim(1.e-4, 1.1)
+        ax.tick_params(axis='y', which='major', labelsize=fs, pad=8)       
+        ax.tick_params(axis='x', which='major', labelsize=fs, pad=8)
+        #ax.minorticks_off()
+        ax.tick_params('both', length=8, width=1, which='major')
+        ax.tick_params('both', length=4, width=1, which='minor')
+        ax.xaxis.set_minor_locator(MultipleLocator(0.1))
+        ax.xaxis.set_major_locator(MultipleLocator(0.2))  
+
+        ax_top = ax.twiny()
+        x_label = r'$v\ \ \rm{[1000\ \ km\ \ s^{-1}]}$'
+        ax_top.set_xlabel(x_label, fontsize=fs)
+        ax_top.set_xlim(0., 1.4)
+        ticks_top = np.arange(2500, 17501, 2500)
+        avg_velocity = (self.velocity_fine[0:-1] + self.velocity_fine[1:]) / 2.
+        vel2mass = interp1d(avg_velocity, self.mass_fine)
+        tick_pos = vel2mass(ticks_top)
+        ax_top.set_xticks(tick_pos)
+        ax_top.set_xticklabels(ticks_top / 1000.)
+        ax_top.tick_params(axis='x', which='major', labelsize=fs, pad=8)       
+        ax_top.tick_params('x', length=8, width=1, which='major')
+        
+
+        
+        #Plot abundances.
+        list_el_plot = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Ti', 'Fe0', 'Ni0']
+        label = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Ti+Cr', 'Fe0', 'Ni0']
+        color= ['y', 'r', 'b', 'lightgreen', 'peru', 'grey', 'g', 'purple', 'k']
+        for i, el in enumerate(list_el_plot):
+            x = self.mass_requested
+            y = self.abun_requested[el]
+            if el == 'Ti':
+                y = np.asarray(y) * 2.
+            
+            ax.step(x, y, color=color[i], label=label[i], lw=3., where='post')
+
+        #plot mass at the coarse shell transitions (i.e. where
+        #abundances change.)
+        for i, m in enumerate(self.mass_coarse):
+            plt.axvline(x=m, color='k', alpha=0.5, lw=1., ls=':')
+
+        #Add legend
+        ax.legend(frameon=False, fontsize=20., numpoints=1, ncol=1,
+                  labelspacing=0.05, loc='best')          
+
+        plt.tight_layout()        
+
+        #Save and show figure.
+        directory = './../INPUT_FILES/Mazzali_2011fe/'
+        plt.savefig(directory + 'Fig_11fe_abundance_xmass.png', format='png')
         plt.show()    
     
     def run_make(self):
@@ -317,7 +376,8 @@ class Make_11fe_file(object):
         self.get_mass_requested()
         self.get_abun_requested()
         self.make_output()
-        self.plot_abundances()
+        self.plot_abundances_xvel()
+        self.plot_abundances_xmass()
         
 if __name__ == '__main__':
     Make_11fe_file()
