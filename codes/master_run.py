@@ -90,11 +90,21 @@ if __name__ == '__main__':
 
     """Tests"""
 
-    Master(event='11fe', case='12d_2D-grid_v13400', StoN='low',
+    Master(event='05bl', case='12d_2D-grid_v0', StoN='low',
            flag_run_simulation=True, flag_compute_features=True,
-           run_uncertainties=True, make_kromer=False,
+           run_uncertainties=True, make_kromer=True,
            plot_spectra=True, show_figs=False, parallel=False,
            verbose=True).run_master()  
+
+
+
+
+
+    #Master(event='11fe', case='12d_2D-grid_v13400', StoN='low',
+    #       flag_run_simulation=True, flag_compute_features=True,
+    #       run_uncertainties=True, make_kromer=False,
+    #       plot_spectra=True, show_figs=False, parallel=False,
+    #       verbose=True).run_master()  
 
 
 
