@@ -58,7 +58,7 @@ class Input_Parameters(object):
         elif StoN == 'low':
             self.num_packs = '1.0e+4'
             self.iterations = '15'
-            self.last_num_packs = '1.0e+5'
+            self.last_num_packs = '5.0e+4'
             self.num_virtual_packs = '5'
 
         elif StoN == 'very-low':
@@ -131,7 +131,7 @@ class Input_Parameters(object):
             #=-=-=-=-= Pre-defined cases with simulation parameters.=-=-=-=-=#
             
             if case == 'single':
-                self.subdir = 'fast_single/'
+                self.subdir = 'fast_single_blank/'
                 self.seeds = [self.seeds]
             elif case == 'multiple':
                 self.subdir = 'fast_multiple/'
@@ -150,6 +150,7 @@ class Input_Parameters(object):
             self.velocity_array = 'blank'
             self.density_array = 'blank'
             self.distance = 'blank'
+            #self.distance = '24.2 Mpc'
             self.exponent = 'blank'
             self.temperature_requested = 'blank'
 
@@ -239,6 +240,18 @@ class Input_Parameters(object):
                 self.velocity_start = ['8100', '7600', '6800'] * 1
                 self.line_interaction = ['macroatom'] * 3
 
+            elif case == '12d_C-scaled_v0':
+                self.subdir = '05bl_12d_C-scaled_v0/'    
+
+                self.luminosity = '8.617'
+                self.time_explosion = '12.0'
+                self.velocity_start = '8100'
+
+                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00']
+                                
+                self.line_interaction = 'macroatom'
+                self.el1_scaling = {'el': 'C', 'v_start': 0., 'factors': scales}             
+            
 
             #Test case.
             elif case == 'test':       
@@ -620,6 +633,19 @@ class Input_Parameters(object):
                 self.el1_scaling = {'el': 'Fe0', 'v_start': 13400.,
                                     'factors': Fe_scaling} 
 
+            elif case == '12d_C-scaled_v0':
+                self.subdir = '11fe_12d_C-scaled_v0/'     
+
+                self.luminosity = str(self.lum2loglum(2.3e9))               
+
+                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00']
+                                            
+                self.time_explosion = '12.1'    
+                self.velocity_start = '10700'
+                self.line_interaction = 'macroatom' 
+                self.el1_scaling = {'el': 'C', 'v_start': 0., 'factors': scales} 
+
+
             elif case == '19d_2D-grid_v13400':
                 self.subdir = '11fe_2D-grid_19d_v13400_UP/'     
 
@@ -660,9 +686,10 @@ class Input_Parameters(object):
                 #self.time_explosion = '19.1'    
                 #self.velocity_start = '7850'
                 #self.line_interaction = 'macroatom'
-                #self.el1_scaling = {'el': 'Fe0', 'v_start': 17000.,
-                #                    'factors': ['2.0']}            
-
+                self.el1_scaling = {'el': 'Mg', 'v_start': 12400.,
+                                   'factors': ['0.1']}            
+                self.el2_scaling = {'el': 'Ca', 'v_start': 12400.,
+                                   'factors': ['5.0']} 
             else:
                 self.case_error(case, event) 
             

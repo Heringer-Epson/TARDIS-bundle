@@ -23,8 +23,8 @@ class Quick_Test(object):
     def __init__(self):     
         yml_list = Master(event='fast', case='single', StoN='very-low',
                           flag_run_simulation=True, flag_compute_features=True,
-                          run_uncertainties=False, make_kromer=False,
-                          plot_spectra=False, show_figs=True,
+                          run_uncertainties=False, make_kromer=True,
+                          plot_spectra=True, show_figs=True,
                           verbose=True).run_master()   
 
 
@@ -338,7 +338,7 @@ class Compute_Smoothing_Factor(object):
 
 if __name__ == '__main__':
 
-    #Quick_Test()
+    Quick_Test()
                 
     #Feature_Test(test_case='single')
     #Feature_Test(test_case='kromer')
@@ -353,4 +353,4 @@ if __name__ == '__main__':
     #Feature_Test(test_case='seeds', quantity='velocity', feature_number='f6')
     #Feature_Test(test_case='seeds', quantity='depth', feature_number='f6')
 
-    Compute_Smoothing_Factor()
+    #Compute_Smoothing_Factor()

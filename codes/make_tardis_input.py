@@ -269,12 +269,15 @@ class Make_Inputs(object):
                 el_most = self.elements[abundance_all.argmax()]
                 orig_abun = float(abun[element][i])
                 new_abun = scale * orig_abun
-                                
-                #Update abundances.
-                abun[element][i] = str(new_abun)            
-                abun[el_most][i] = str(float(abun[el_most][i])
-                                       + (orig_abun - new_abun))        
-        
+                
+                #Prevent layers rich in a given element (say carbon) to be
+                #scaled and receive a larger than 1 value.
+                if new_abun < 1.:                                
+					#Update abundances.
+					abun[element][i] = str(new_abun)            
+					abun[el_most][i] = str(float(abun[el_most][i])
+										   + (orig_abun - new_abun))        
+			
         return abun
 
     def add_abun(self, inp_abun, el_adding, parcel):
