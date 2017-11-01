@@ -17,7 +17,7 @@ class Master(object):
     def __init__(self, event, case, StoN,
                  flag_run_simulation=True, flag_compute_features=True, 
                  run_uncertainties=False, make_kromer=False,
-                 plot_spectra=False, show_figs=False,
+                 plot_spectra=False, plot_abun=True, show_figs=False,
                  parallel=False, verbose=True):
 
         self.inputs = class_input(event=event, case=case, StoN=StoN,
@@ -28,6 +28,7 @@ class Master(object):
         self.run_uncertainties = run_uncertainties
         self.make_kromer = make_kromer
         self.plot_spectra = plot_spectra
+        self.plot_abun = plot_abun
         self.show_figs = show_figs
         self.parallel = parallel
         self.verbose = verbose
@@ -57,7 +58,7 @@ class Master(object):
             os.mkdir(output_dir)                        
 
         #Make a sub-dir and a .yml file for each simulation.
-        object_make_yml = Make_Inputs(self.inputs, self.verbose)                 
+        object_make_yml = Make_Inputs(self.inputs, self.plot_abun, self.verbose)                 
         self.created_ymlfiles_list = object_make_yml.run()
 
         if self.flag_run_simulation:
@@ -90,21 +91,28 @@ if __name__ == '__main__':
 
     """Tests"""
 
-    Master(event='fast', case='single', StoN='low',
-           flag_run_simulation=True, flag_compute_features=True,
-           run_uncertainties=False, make_kromer=False,
-           plot_spectra=False, show_figs=False, parallel=False,
-           verbose=True).run_master()  
-
-    #Master(event='11fe', case='test_5.9d', StoN='low',
+    #Master(event='11fe', case='12d_C-scan', StoN='medium-high',
     #       flag_run_simulation=True, flag_compute_features=True,
     #       run_uncertainties=False, make_kromer=False,
     #       plot_spectra=False, show_figs=False, parallel=False,
     #       verbose=True).run_master()  
 
-    #Master(event='11fe', case='12d_C-scaled_v0', StoN='low',
+    #Master(event='fast', case='single', StoN='low',
     #       flag_run_simulation=True, flag_compute_features=True,
-    #       run_uncertainties=True, make_kromer=True,
+    #       run_uncertainties=False, make_kromer=False,
+    #       plot_spectra=False, show_figs=False, parallel=False,
+    #       verbose=True).run_master()  
+
+    Master(event='11fe', case='test_5.9d', StoN='low',
+           flag_run_simulation=False, flag_compute_features=False,
+           run_uncertainties=False, make_kromer=False,
+           plot_spectra=False, plot_abun=True,
+           show_figs=True, parallel=False,
+           verbose=True).run_master()  
+
+    #Master(event='11fe', case='19d_C-scaled', StoN='medium-high',
+    #       flag_run_simulation=True, flag_compute_features=True,
+    #       run_uncertainties=True, make_kromer=False,
     #       plot_spectra=True, show_figs=False, parallel=False,
     #       verbose=True).run_master()  
 
@@ -134,10 +142,10 @@ if __name__ == '__main__':
 
 
 
-    #Master(event='05bl', case='default_L-scaled_extra0.01Fe-outer', StoN='low',
-    #       flag_run_simulation=True, flag_compute_features=True,
-    #       run_uncertainties=True, make_kromer=True,
-    #       plot_spectra=True, show_figs=False, parallel=False,
+    #Master(event='05bl', case='test', StoN='low',
+    #       flag_run_simulation=True, flag_compute_features=False,
+    #       run_uncertainties=False, make_kromer=False,
+    #       plot_spectra=False, show_figs=True, parallel=False,
     #       verbose=True).run_master() 
 
 

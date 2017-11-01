@@ -7,6 +7,9 @@ import copy
 import itertools                                                        
 import numpy as np
 import astropy.units as u
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.ticker import MultipleLocator
 
 class Make_Inputs(object):
     """
@@ -66,8 +69,9 @@ class Make_Inputs(object):
       copy_this_code=True, subdir_safety=False, clean_subdir=True,
       verbose=True):
       '''
-    def __init__(self, inputs, verbose):
+    def __init__(self, inputs, plot_abun, verbose):
           
+        self.plot_abun = plot_abun
         self.verbose = verbose
 
         self.event = inputs.event
@@ -106,9 +110,15 @@ class Make_Inputs(object):
         self.el1_scaling = inputs.el1_scaling
         self.el2_scaling = inputs.el2_scaling
         self.el_adding = inputs.el_adding
-        self.MASTER[self.el1_scaling['el']] = inputs.el1_scaling['factors']
-        self.MASTER[self.el2_scaling['el']] = inputs.el2_scaling['factors']
-        self.MASTER[self.el_adding['el']] = inputs.el_adding['add']
+        self.MASTER[self.el1_scaling['el'] + '-F1'] = inputs.el1_scaling['factors']
+        self.MASTER['v_start_F1'] = inputs.el1_scaling['v_start']
+        self.MASTER['v_stop_F1'] = inputs.el1_scaling['v_stop']
+        self.MASTER[self.el2_scaling['el'] + '-F2'] = inputs.el2_scaling['factors']
+        self.MASTER['v_start_F2'] = inputs.el2_scaling['v_start']
+        self.MASTER['v_stop_F2'] = inputs.el2_scaling['v_stop']
+        self.MASTER[self.el_adding['el'] + '-A'] = inputs.el_adding['add']
+        self.MASTER['v_start_A'] = inputs.el_adding['v_start']
+        self.MASTER['v_stop_A'] = inputs.el_adding['v_stop']
                 
         self.MASTER['rho_0'] = inputs.rho_0
         self.MASTER['v_0'] = inputs.v_0
@@ -250,17 +260,17 @@ class Make_Inputs(object):
 
         return velocity_array, density_array, abun
 
-    def scale_abun(self, inp_abun, el_scaling, scale):
+    def scale_abun(self, inp_abun, el_scaling, scale, v_start, v_stop):
         
         element = el_scaling['el']
-        v_start = el_scaling['v_start']
         #Make independent copy of the abun dictionary to prevent differentt_exp
         #from modifying an already modified (decayed, or scaled) abundundaces. 
         abun = copy.deepcopy(inp_abun)
     
-        if element != 'None':
+        if element != 'None' and element != 'Z':
             shells = np.arange(0, len(self.velocity_array), 1)
-            condition = (self.velocity_array >= v_start)
+            condition = ((self.velocity_array >= v_start)
+                         & (self.velocity_array <= v_stop))
             shell_window = shells[condition]
             
             for i in shell_window:
@@ -277,20 +287,45 @@ class Make_Inputs(object):
 					abun[element][i] = str(new_abun)            
 					abun[el_most][i] = str(float(abun[el_most][i])
 										   + (orig_abun - new_abun))        
-			
+
+        if element == 'Z':
+
+            #Modified the abundance of elements with Z>20.
+            el_mod = ['Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu',
+                      'Zn', 'Fe0', 'Ni0'] 
+
+            shells = np.arange(0, len(self.velocity_array), 1)
+            condition = ((self.velocity_array >= v_start)
+                         & (self.velocity_array <= v_stop))
+            shell_window = shells[condition]
+            
+            for i in shell_window:
+                abundance_all = np.asarray([abun[el][i] for el in self.elements])
+                abundance_all = np.nan_to_num(abundance_all)
+                el_most = self.elements[abundance_all.argmax()]
+                
+                changed = 0.
+                for _element in el_mod:
+                    orig_abun = float(abun[_element][i])
+                    new_abun = scale * orig_abun
+                    abun[_element][i] = str(new_abun)            
+                    changed += (orig_abun - new_abun)
+                    
+                abun[el_most][i] = str(float(abun[el_most][i]) + changed)        
+
         return abun
 
-    def add_abun(self, inp_abun, el_adding, parcel):
+    def add_abun(self, inp_abun, el_adding, parcel, v_start, v_stop):
 
         element = el_adding['el']
-        v_start = el_adding['v_start']
         #Make independent copy of the abun dictionary to prevent differentt_exp
         #from modifying an already modified (decayed, or scaled) abundundaces. 
         abun = copy.deepcopy(inp_abun)
     
         if element != 'None':
             shells = np.arange(0, len(self.velocity_array), 1)
-            condition = (self.velocity_array >= v_start)
+            condition = ((self.velocity_array >= v_start)
+                         & (self.velocity_array <= v_stop))
             shell_window = shells[condition]
             
             for i in shell_window:
@@ -401,8 +436,50 @@ class Make_Inputs(object):
                 out_abundance.write('\n' + str(i))
                 for el in self.elements[:-2]:
                     out_abundance.write(' ' + str(abun[el][i]))
+
+    def make_abundance_plot(self, fpath_plot, vel, inp_abun):
+        
+        abun = copy.deepcopy(inp_abun)
+        #Arrange figure frame.
+        fs = 26.
+        fig, ax = plt.subplots(figsize=(14,8))
+        x_label = r'$v\ \ \rm{[km\ \ s^{-1}]}$'
+        y_label = r'$\rm{mass\ \ fraction}$'
+        ax.set_xlabel(x_label, fontsize=fs)
+        ax.set_ylabel(y_label, fontsize=fs)
+        ax.set_yscale('log')
+        ax.set_xlim(2500., 23000.)
+        ax.set_ylim(1.e-4, 1.1)
+        ax.tick_params(axis='y', which='major', labelsize=fs, pad=8)       
+        ax.tick_params(axis='x', which='major', labelsize=fs, pad=8)
+        #ax.minorticks_off()
+        ax.tick_params('both', length=8, width=1, which='major')
+        ax.tick_params('both', length=4, width=1, which='minor')
+        ax.xaxis.set_minor_locator(MultipleLocator(1000.))
+        ax.xaxis.set_major_locator(MultipleLocator(5000.))  
+        
+        #Plot abundances.
+        list_el_plot = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Ti', 'Fe0', 'Ni0']
+        label = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Ti+Cr', 'Fe0', 'Ni0']
+        color= ['y', 'r', 'b', 'lightgreen', 'peru', 'grey', 'g', 'purple', 'k']
+        for i, el in enumerate(list_el_plot):
+            x = vel
+            y = abun[el]
+            if el == 'Ti':
+                y = np.asarray(y) * 2.
+            
+            ax.step(x, y, color=color[i], label=label[i], lw=3., where='post')
+
+        ax.legend(frameon=False, fontsize=20., numpoints=1, ncol=1,
+                  labelspacing=0.05, loc='best')          
+        plt.tight_layout()        
+        plt.savefig(fpath_plot, format='png', dpi=360)
+        plt.close()
                                     
-    def control_structure_files(self, spawn_dir, t_exp, scale1, scale2, parcel):
+    def control_structure_files(self, spawn_dir, t_exp,
+                                scale_F1, v_start_F1, v_stop_F1,
+                                scale_F2, v_start_F2, v_stop_F2,
+                                parcel_A, v_start_A, v_stop_A):
         """This function uses the name of the input_pars_X.py file to determine
         whether to make a density and an abundance files. Note that
         input_pars_Hach.py has its own routine to read the data provided by
@@ -411,6 +488,7 @@ class Make_Inputs(object):
 
         self.dens_fpath = spawn_dir + 'density_' + t_exp + '_day.dat'
         self.abun_fpath = spawn_dir + 'abundance_' + t_exp + '_day.dat'
+        abun_plot_fpath = spawn_dir + 'abundance.png'
             
         if self.structure_type == 'file' and self.abundance_type == 'file':
             if self.event == '05bl' or '11fe':                
@@ -421,20 +499,26 @@ class Make_Inputs(object):
             flag_make_structure = False
                                     
         #Call routine to scale the mass fraction of elements.
-        abun_up1 = self.scale_abun(self.abun, self.el1_scaling, scale1)
-        abun_up2 = self.scale_abun(abun_up1, self.el2_scaling, scale2)
+        abun_up1 = self.scale_abun(self.abun, self.el1_scaling,
+                                   scale_F1, v_start_F1, v_stop_F1)
+        abun_up2 = self.scale_abun(abun_up1, self.el2_scaling,
+                                   scale_F2, v_start_F2, v_stop_F2)
 
         #Call routine to add the mass fraction of elements.
-        abun_up3 = self.add_abun(abun_up2, self.el_adding, parcel)
+        abun_up3 = self.add_abun(abun_up2, self.el_adding,
+                                 parcel_A, v_start_A, v_stop_A)
         
         #Call routine to compute the decay of 56Ni.
         abun_decayed = self.compute_Ni_decay(abun_up3, t_exp)
             
-        #If necessary, write abundance and density files.
+        #If necessary, write abundance and density files and make abun plot.
         if self.structure_type == 'file' and self.abundance_type == 'file':                
             self.make_density_file(self.dens_fpath, self.velocity_array,
                                    self.density_array)
             self.make_abundance_file(self.abun_fpath, abun_decayed)
+            if self.plot_abun:
+                self.make_abundance_plot(abun_plot_fpath, self.velocity_array,
+                                         abun_decayed)    
     
     def write_yml(self):
         """ Main function to write the output .yml files."""
@@ -457,11 +541,15 @@ class Make_Inputs(object):
             #If necessary, make density and abundance files.            
             if not os.path.exists(spawn_dir):
                 os.mkdir(spawn_dir)
-            self.control_structure_files(spawn_dir, PARS['time_explosion'],
-                                         float(PARS[self.el1_scaling['el']]),
-                                         float(PARS[self.el2_scaling['el']]),
-                                         float(PARS[self.el_adding['el']]))
-        
+            self.control_structure_files(
+              spawn_dir, PARS['time_explosion'],
+              float(PARS[self.el1_scaling['el'] + '-F1']),
+              float(PARS['v_start_F1']), float(PARS['v_stop_F1']),
+              float(PARS[self.el2_scaling['el'] + '-F2']),
+              float(PARS['v_start_F2']), float(PARS['v_stop_F2']),
+              float(PARS[self.el_adding['el'] + '-A']),
+              float(PARS['v_start_A']), float(PARS['v_stop_A']))
+
             if self.verbose:
                 print '    CREATED: ' + ymlfile_fullpath
 
