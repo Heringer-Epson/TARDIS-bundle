@@ -221,43 +221,29 @@ class Make_Inputs(object):
         #based on digitalizing the published figures 3 and 10 in
         #http://adsabs.harvard.edu/abs/2014MNRAS.439.1959M        
         if event == '05bl':
-            read_every = 2
-            t_exp2str = {'11.0': 'm6', '12.0': 'm5', '14.0': 'm3', '21.8': 'p48',
-                         '29.9': 'p129'}                
-            phase = t_exp2str[time]
-            fpath = ('./../INPUT_FILES/Hachinger_2005bl/models-05bl-w7e0.7/' 
-                     + 'SN2005bl_' + phase + '/' + 'abuplot.dat')
-            self.time_0 = str(float(time) * 24. * 3600.) + ' s'
+            sys.exit('05bl is currently disabled. Need uptade for auto Ni56.')
+            #read_every = 2
+            #t_exp2str = {'11.0': 'm6', '12.0': 'm5', '14.0': 'm3', '21.8': 'p48',
+            #             '29.9': 'p129'}                
+            #phase = t_exp2str[time]
+            #fpath = ('./../INPUT_FILES/Hachinger_2005bl/models-05bl-w7e0.7/' 
+            #         + 'SN2005bl_' + phase + '/' + 'abuplot.dat')
+            #self.time_0 = str(float(time) * 24. * 3600.) + ' s'
                 
-        elif event == '11fe':
+        if event == '11fe':
             read_every = 1 
             fpath = ('./../INPUT_FILES/Mazzali_2011fe/ejecta_layers.dat')                   
         
-        rows = []
-        with open(fpath, 'r') as inp:
-            for line in itertools.islice(inp, 2, None, read_every):
-                column = line.rstrip('\n').split(' ') 
-                column = filter(None, column)
-                rows.append(column)               
-
-        #Extract velocity, density and abundances.
-        velocity_array = np.asarray([float(row[1]) for row in rows])
-        density_array = np.asarray([10.**float(row[3]) for row in rows])
-                
-        #Get abundances.
         abun = {} 
         
-        for el in self.elements:
-            abun[el] = np.zeros(len(velocity_array))
+        velocity_array, density_array = np.loadtxt(
+          fpath, skiprows=2, usecols=(1, 3), unpack=True)
+        density_array = 10. ** density_array        
         
-        for i, velocity in enumerate(velocity_array):
-            sum_elem = 0.               
-            for j, el in enumerate(self.elements):
-                
-                abun_value = float(rows[i][4 + j])
-                abun[el][i] = abun_value
-                sum_elem += abun_value
-
+        for i, el in enumerate(self.elements):
+            abun[el] = np.loadtxt(fpath, skiprows=2, usecols=(4 + i,),
+                                  unpack=True)
+        
         return velocity_array, density_array, abun
 
     def scale_abun(self, inp_abun, el_scaling, scale, v_start, v_stop):
@@ -340,86 +326,25 @@ class Make_Inputs(object):
                 abun[el_most][i] = str(float(abun[el_most][i]) + (orig_abun - new_abun))        
 
         return abun            
-        
-    def compute_Ni_decay(self, inp_abun, time):
-        
-        #Make independent copy of the abun dictionary to prevent differentt_exp
-        #from modifying an already modified (decayed, or scaled) abundundaces. 
-        abun = copy.deepcopy(inp_abun)
-                
-        def decay_Ni_Co_Fe(time, Ni_formed):
-            """Calculates the decay chain Ni->Co->Fe.
-            
-            Source: Nadyozhin+ 1994
-            http://adsabs.harvard.edu/full/1994ApJS...92..527N
-            
-            Remarks: Difference between halflife and lifetime: the 
-            former is the intuitive (1/2)^(t/Tau), while lifetime uses
-            the exponential form. The correlation between constants
-            is T_exp = T_1/2 *(1/ln(2))
-            
-            Values: Half-lifes are taken from Jonghwa Chang's
-            (Korea Atomic Energy Research Institute)
-            http://atom.kaeri.re.kr/nuchart/
-            """
-           
-            Ni_half_life = 6.07/np.log(2.)
-            Co_half_life = 77.24/np.log(2.)
-           
-            Ni_remain = Ni_formed*np.exp(-time/Ni_half_life) 
-             
-            Co_remain = Ni_formed*(Co_half_life/(Co_half_life
-            - Ni_half_life))*(np.exp(-time/Co_half_life)
-            - np.exp(-time/Ni_half_life))
-            
-            Fe_remain = Ni_formed*(1. + Ni_half_life/(Co_half_life
-            - Ni_half_life)*np.exp(-time/Ni_half_life)
-            - Co_half_life/(Co_half_life - Ni_half_life)
-            *np.exp(-time/Co_half_life))
-            
-            Ni_change = Ni_remain - Ni_formed
-            Co_change = Co_remain
-            Fe_change = Fe_remain
-                        
-            """Round numbers to write the abundance file"""
-            Ni_change = float(format(Ni_change, '.6f'))
-            Co_change = float(format(Co_change, '.6f'))
-            Fe_change = float(format(Fe_change, '.6f'))           
-            
-            if abs(Ni_change + Co_change + Fe_change) > 1.e-5:
-                #Test if rounded decay products sum to initial Ni_formed
-                Ni_change -= Ni_change + Co_change + Fe_change
-            
-            return Ni_change, Co_change, Fe_change
 
-        #for i, velocity in enumerate(self.velocity_array):
-        for i in range(len(abun['Si'])):
-            
-            """Compute changes due to decay of Ni and Co."""     
-            Ni_initial = float(abun['Ni0'][i])
-            Ni_change, Co_change, Fe_change = decay_Ni_Co_Fe(
-                                            float(time),Ni_initial)
+    def make_structure_file(self, fpath, velocity_array, density_array, abun):
 
-            abun['Ni'][i] = str(format(float(abun['Ni0'][i])
-            + Ni_change, '.6f'))  
-            
-            #Note that all of the Cobalt is from the decay of Ni and therefore
-            #values passed in abun[Co] are always ignored. 
-            abun['Co'][i] = str(format(Co_change, '.6f'))  
-            
-            abun['Fe'][i] = str(format(float(abun['Fe0'][i])
-            + Fe_change, '.6f'))  
+        N_shells = len(abun['H'])
+        header1 = 't0: ' + self.time_0
+        header2 = 'index velocity density'
+        header3 = '1 km/s g/cm^3'
+        for el in self.elements:
+            header2 += ' ' + el  
+            header3 += ' 1'  
 
-            """Test if abundances add up to 1 in each layer."""
-            sum_elem = 0.    
-            for element in self.elements[:-2]:
-                sum_elem += float(abun[element][i])
-            if abs(sum_elem - 1.) > 1.e-5:
-                raise ValueError("Error: In index %s,\
-                the abundance does not add to 1. Needs %s"
-                % (i, 1-sum_elem))
-
-        return abun
+        with open(fpath, 'w') as out_structure:         
+            out_structure.write(header1 + ' \n')
+            out_structure.write(header2 + ' \n')
+            out_structure.write(header3)
+            for i, (v, d) in enumerate(zip(velocity_array, density_array)):
+                out_structure.write('\n' + str(i) + ' ' + str(v) + ' ' + str(d))                 
+                for el in self.elements:
+                    out_structure.write(' ' + str(abun[el][i]))
 
     def make_density_file(self, fpath, velocity_array, density_array):
         with open(fpath, 'w') as out_density:
@@ -434,9 +359,9 @@ class Make_Inputs(object):
             N_shells = len(abun['H'])
             for i in range(N_shells):
                 out_abundance.write('\n' + str(i))
-                for el in self.elements[:-2]:
+                for el in self.elements:
                     out_abundance.write(' ' + str(abun[el][i]))
-
+                    
     def make_abundance_plot(self, fpath_plot, vel, inp_abun):
         
         abun = copy.deepcopy(inp_abun)
@@ -488,6 +413,7 @@ class Make_Inputs(object):
 
         self.dens_fpath = spawn_dir + 'density_' + t_exp + '_day.dat'
         self.abun_fpath = spawn_dir + 'abundance_' + t_exp + '_day.dat'
+        #self.model_fpath = spawn_dir + 'model_' + t_exp + '_day.dat'
         abun_plot_fpath = spawn_dir + 'abundance.png'
             
         if self.structure_type == 'file' and self.abundance_type == 'file':
@@ -507,18 +433,17 @@ class Make_Inputs(object):
         #Call routine to add the mass fraction of elements.
         abun_up3 = self.add_abun(abun_up2, self.el_adding,
                                  parcel_A, v_start_A, v_stop_A)
-        
-        #Call routine to compute the decay of 56Ni.
-        abun_decayed = self.compute_Ni_decay(abun_up3, t_exp)
             
         #If necessary, write abundance and density files and make abun plot.
         if self.structure_type == 'file' and self.abundance_type == 'file':                
             self.make_density_file(self.dens_fpath, self.velocity_array,
                                    self.density_array)
-            self.make_abundance_file(self.abun_fpath, abun_decayed)
+            self.make_abundance_file(self.abun_fpath, abun_up3)            
+            #self.make_structure_file(self.model_fpath, self.velocity_array,
+            #                         self.density_array, abun_up3)
             if self.plot_abun:
                 self.make_abundance_plot(abun_plot_fpath, self.velocity_array,
-                                         abun_decayed)    
+                                         abun_up3)    
     
     def write_yml(self):
         """ Main function to write the output .yml files."""
@@ -586,7 +511,7 @@ class Make_Inputs(object):
                                    + self.density_type + '\n')
                     
                     if self.density_type == 'exponential':
-                        yml_file.write('            time_0: '
+                        yml_file.write('            time_0:  '
                                        +PARS['time_0']+' day\n')
                         yml_file.write('            rho_0: '
                                        +PARS['rho_0']+' g/cm^3\n')

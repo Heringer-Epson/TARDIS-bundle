@@ -34,7 +34,7 @@ class Make_11fe_file(object):
         self.N_requested_shells = len(self.velocity_requested)
 
         #The coarse shells demarcate where the composition of the ejecta changes.
-        #These shells were chosen by hand using the changes of slope in the Ni0
+        #These shells were chosen by hand using the changes of slope in the Ni56
         #curve of the original plot.
         self.abun_coarse = {}
         self.format_abun_format = {}
@@ -53,12 +53,12 @@ class Make_11fe_file(object):
         
         self.top_dir = './../INPUT_FILES/Mazzali_2011fe/'
         
-        self.el = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'TiCr', 'Fe0', 'Ni0']
+        self.el = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'TiCr', 'Fe58', 'Ni56']
         
         self.el_all = [
           'H', 'He', 'Li', 'B', 'Be', 'C', 'N', 'O', 'F', 'Ne', 'Na',
-          'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc',
-          'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Fe0', 'Ni0'] 
+          'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V',
+          'Cr', 'Mn', 'Fe56', 'Fe58', 'Co', 'Ni56', 'Ni58', 'Cu', 'Zn'] 
         
         self.run_make()
 
@@ -112,16 +112,19 @@ class Make_11fe_file(object):
         provide the velocity (and consequently mass at were one needs to
         retrieve the abundances of the other elements.)
         """
-        fpath = self.top_dir + '/abundance_Ni0.csv'
-
+        
+        #Read the mass at specified points (where slopes change).
+        #Note that the Ni56 abundance file was digitalized differently, so that
+        #the slope changing points were determined by hand.
+        fpath = self.top_dir + '/abundance_Ni56.csv'
         with open(fpath, 'r') as inp:
             for line in inp:
                 column = line.rstrip('\n').split(',') 
                 column = filter(None, column)
                 self.mass_coarse.append(float(column[0]))            
-        
         self.mass_coarse = np.asarray(self.mass_coarse)
                
+        #Get abundances at those specified points by interpolation.
         for el in self.el:
             fpath = self.top_dir + '/abundance_' + el + '.csv'
             mass = []
@@ -162,22 +165,28 @@ class Make_11fe_file(object):
     def format_abun_dict(self):
         
         zero_array = np.zeros(self.N_coarse_shells)
-        nan_array = np.zeros(self.N_coarse_shells)
-        nan_array[:] = np.nan
+
+        self.el = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'TiCr', 'Fe58', 'Ni56']
+        
+        self.el_all = [
+          'H', 'He', 'Li', 'B', 'Be', 'C', 'N', 'O', 'F', 'Ne', 'Na',
+          'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V',
+          'Cr', 'Mn', 'Fe56', 'Fe58', 'Co', 'Ni56', 'Ni58', 'Cu', 'Zn'] 
 
         other_el = ['H', 'He', 'Li', 'B', 'Be', 'N', 'F', 'Ne', 'Na', 'Al',
-                    'P', 'Cl', 'Ar', 'K', 'Sc', 'V', 'Mn', 'Co', 'Cu', 'Zn'] 
+                    'P', 'Cl', 'Ar', 'K', 'Sc', 'V', 'Mn', 'Co', 'Fe56',
+                    'Ni58', 'Cu', 'Zn'] 
         
         for el in other_el:
             self.format_abun_format[el] = zero_array
 
-        for el in ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Fe0', 'Ni0']:
+        for el in ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Fe58', 'Ni56']:
             self.format_abun_format[el] = self.abun_coarse[el]
             
         self.format_abun_format['Ti'] = self.abun_coarse['TiCr'] / 2.    
         self.format_abun_format['Cr'] = self.abun_coarse['TiCr'] / 2. 
-        self.format_abun_format['Fe'] = nan_array
-        self.format_abun_format['Ni'] = nan_array
+        self.format_abun_format['Fe56'] = zero_array
+        self.format_abun_format['Ni58'] = zero_array
 
     def get_velocity_coarse(self):
         avg_velocity = (self.velocity_fine[0:-1] + self.velocity_fine[1:]) / 2.
@@ -218,25 +227,15 @@ class Make_11fe_file(object):
         fpath = self.top_dir + '/ejecta_layers.dat'
         
         #Make header
-        line1 = 'shno velocity cum_M logdens'
-        line2 = 'shno velocity cum_M logdens'
+        header = 'shno velocity cum_M logdens'
         for i, el in enumerate(self.el_all):
-            el_num = i + 1
-            if el_num == 31:
-                el_num = 98
-            if el_num == 32:
-                el_num = 99
-                            
-            line1 += ' ' + str(el_num) 
-            line2 += ' ' + el 
-
-        line1 += ' \n'
-        line2 += ' \n'
+            header += ' ' + el 
+        header += ' \n'
 
         #Write outfile.             
         with open(fpath, 'w') as out:
-            out.write(line1) 
-            out.write(line2) 
+            out.write('#SN2011fe\n') 
+            out.write(header) 
             for i in range(self.N_requested_shells):            
                 shno = str(i)
                 vel = str(format(self.velocity_requested[i], '.0f'))
@@ -268,8 +267,8 @@ class Make_11fe_file(object):
         ax.xaxis.set_major_locator(MultipleLocator(5000.))  
         
         #Plot abundances.
-        list_el_plot = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Ti', 'Fe0', 'Ni0']
-        label = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Ti+Cr', 'Fe0', 'Ni0']
+        list_el_plot = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Ti', 'Fe58', 'Ni56']
+        label = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Ti+Cr', 'Fe58', 'Ni56']
         color= ['y', 'r', 'b', 'lightgreen', 'peru', 'grey', 'g', 'purple', 'k']
         for i, el in enumerate(list_el_plot):
             x = self.velocity_requested
@@ -337,8 +336,8 @@ class Make_11fe_file(object):
 
         
         #Plot abundances.
-        list_el_plot = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Ti', 'Fe0', 'Ni0']
-        label = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Ti+Cr', 'Fe0', 'Ni0']
+        list_el_plot = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Ti', 'Fe58', 'Ni56']
+        label = ['C', 'O', 'Mg', 'Si', 'S', 'Ca', 'Ti+Cr', 'Fe58', 'Ni56']
         color= ['y', 'r', 'b', 'lightgreen', 'peru', 'grey', 'g', 'purple', 'k']
         for i, el in enumerate(list_el_plot):
             x = self.mass_requested

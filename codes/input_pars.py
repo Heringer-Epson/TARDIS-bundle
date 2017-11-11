@@ -30,8 +30,9 @@ class Input_Parameters(object):
 
         self.elements = [
           'H', 'He', 'Li', 'B', 'Be', 'C', 'N', 'O', 'F', 'Ne', 'Na',
-          'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc',
-          'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Fe0', 'Ni0'] 
+          'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V',
+          'Cr', 'Mn', 'Fe56', 'Fe58', 'Co', 'Ni56', 'Ni58', 'Cu', 'Zn'] 
+          
           
         #Publication quality.
         if StoN == 'high':
