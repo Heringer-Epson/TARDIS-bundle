@@ -328,10 +328,10 @@ class Input_Parameters(object):
             #Used to compute the default tomography analysis.
             if case == 'default':    
                 self.subdir = '11fe_default/'
-                self.luminosity  = ['0.08e9', '0.32e9', '1.1e9', '2.3e9', '3.2e9', '3.5e9', '3.2e9', '2.3e9']       
+                self.luminosity  = [str(format(np.log10(l), '.3f')) for l in [0.08e9, 0.32e9, 1.1e9, 2.3e9, 3.2e9, 3.5e9, 3.2e9, 2.3e9]]
                 self.time_explosion = ['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3'] 
                 self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']
-                self.line_interaction = 'downbranch' #Similar to original work.
+                self.line_interaction = ['downbranch'] * 8 #Similar to original work.
 
             #Compute spectra with standard settings, where L is scaled by
             #1, 1/2, 1/3 and 1/4.
@@ -657,7 +657,7 @@ class Input_Parameters(object):
                                     'v_stop': 1.e6, 'factors': Fe_scaling}             
             
             
-            elif case == '12d_C-scaled_v0':
+            elif case == '12d_C-scaled':
                 self.subdir = '11fe_12d_C-scaled/'     
 
                 L_scal = np.arange(0.2, 1.61, 0.1)
@@ -673,6 +673,26 @@ class Input_Parameters(object):
                                             
                 self.time_explosion = '12.1'    
                 self.velocity_start = '10700'
+                self.line_interaction = 'downbranch' 
+                self.el1_scaling = {'el': 'C', 'v_start': '0', 'v_stop': '100000',
+                                    'factors': C_scaling} 
+
+            elif case == '16d_C-scaled':
+                self.subdir = '11fe_16d_C-scaled/'     
+
+                L_scal = np.arange(0.2, 1.61, 0.1)
+                self.luminosity = [self.lum2loglum(3.2e9 * l) for l in L_scal]                
+                self.luminosity = self.luminosity * 12
+
+                scales = ['0.00', '0.01', '0.02', '0.05', '0.10', '0.20',
+                          '0.50', '1.00', '2.00', '5.00', '10.00', '20.00']
+
+                C_scaling = []
+                for s in scales:                    
+                    C_scaling += [s] * 15
+                                            
+                self.time_explosion = '16.1'    
+                self.velocity_start = '9000'
                 self.line_interaction = 'downbranch' 
                 self.el1_scaling = {'el': 'C', 'v_start': '0', 'v_stop': '100000',
                                     'factors': C_scaling} 
@@ -722,12 +742,93 @@ class Input_Parameters(object):
 
                 self.luminosity = self.lum2loglum(2.3e9)                
 
-                v_stop = list(np.arange(10500., 18000., 500.).astype('int').astype('str'))
+                v_stop = list(np.arange(10500., 15000., 500.).astype('int').astype('str'))
                 self.time_explosion = '12.1'    
                 self.velocity_start = '10700'
                 self.line_interaction = 'downbranch' 
                 self.el1_scaling = {'el': 'C', 'v_start': '0',
                                     'v_stop': v_stop, 'factors': '0'}
+            
+            elif case == '12d_C-scan_grid':
+                self.subdir = '11fe_12d_C-scan_grid/'     
+
+                L_scal = np.arange(0.2, 1.61, 0.1)
+                self.luminosity = [self.lum2loglum(2.3e9 * l) for l in L_scal]                
+                self.luminosity = self.luminosity * 9
+
+                v_stop = list(np.arange(10500., 15000., 500.).astype('int').astype('str'))
+
+                v_stop_list = []
+                for v_s in v_stop:                    
+                    v_stop_list += [v_s] * 15
+
+                self.time_explosion = '12.1'    
+                self.velocity_start = '10700'
+                self.line_interaction = 'downbranch' 
+                self.el1_scaling = {'el': 'C', 'v_start': '0',
+                                    'v_stop': v_stop_list, 'factors': '0'}
+
+            elif case == '16d_C-scan':
+                self.subdir = '11fe_16d_C-scan/'     
+
+                self.luminosity = self.lum2loglum(3.2e9)                
+
+                v_stop = list(np.arange(8500., 15000., 500.).astype('int').astype('str'))
+                self.time_explosion = '16.1'    
+                self.velocity_start = '9000'
+                self.line_interaction = 'downbranch' 
+                self.el1_scaling = {'el': 'C', 'v_start': '0',
+                                    'v_stop': v_stop, 'factors': '0'}
+
+            elif case == '19d_C-scan':
+                self.subdir = '11fe_19d_C-scan/'     
+
+                self.luminosity = self.lum2loglum(3.5e9)                
+
+                v_stop = list(np.arange(7500., 15000., 500.).astype('int').astype('str'))
+                self.time_explosion = '19.1'    
+                self.velocity_start = '7850'
+                self.line_interaction = 'downbranch' 
+                self.el1_scaling = {'el': 'C', 'v_start': '0',
+                                    'v_stop': v_stop, 'factors': '0'}
+
+            elif case == '6d_Z-scaled_v13400':
+                self.subdir = '11fe_6d_Z-scaled_v13400/'   
+                L_scal = np.arange(0.2, 1.61, 0.1)
+                self.luminosity = [self.lum2loglum(0.32e9 * l) for l in L_scal]                
+                self.luminosity = self.luminosity * 12
+
+                scales = ['0.00', '0.01', '0.02', '0.05', '0.10', '0.20',
+                          '0.50', '1.00', '2.00', '5.00', '10.00', '20.00']
+                                
+                Z_scaling = []
+                for s in scales:                    
+                    Z_scaling += [s] * 15
+                                            
+                self.time_explosion = '5.9'    
+                self.velocity_start = '12400'
+                self.line_interaction = 'downbranch'
+                self.el1_scaling = {'el': 'Z', 'v_start': '13400',
+                                    'v_stop': '100000', 'factors': Z_scaling}
+
+            elif case == '6d_Z-scaled_v19590':
+                self.subdir = '11fe_6d_Z-scaled_v19590/'   
+                L_scal = np.arange(0.2, 1.61, 0.1)
+                self.luminosity = [self.lum2loglum(0.32e9 * l) for l in L_scal]                
+                self.luminosity = self.luminosity * 12
+
+                scales = ['0.00', '0.01', '0.02', '0.05', '0.10', '0.20',
+                          '0.50', '1.00', '2.00', '5.00', '10.00', '20.00']
+                                
+                Z_scaling = []
+                for s in scales:                    
+                    Z_scaling += [s] * 15
+                                            
+                self.time_explosion = '5.9'    
+                self.velocity_start = '12400'
+                self.line_interaction = 'downbranch'
+                self.el1_scaling = {'el': 'Z', 'v_start': '19590',
+                                    'v_stop': '100000', 'factors': Z_scaling}
                                     
             else:
                 self.case_error(case, event) 

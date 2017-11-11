@@ -91,10 +91,22 @@ if __name__ == '__main__':
 
     """Tests"""
 
-    #Master(event='11fe', case='12d_C-scan', StoN='medium-high',
+    Master(event='11fe', case='default', StoN='low',
+           flag_run_simulation=True, flag_compute_features=True,
+           run_uncertainties=False, make_kromer=False,
+           plot_spectra=False, plot_abun=False, show_figs=False, parallel=False,
+           verbose=True).run_master()
+
+    #Master(event='11fe', case='6d_Z-scaled_v19590', StoN='medium-high',
     #       flag_run_simulation=True, flag_compute_features=True,
-    #       run_uncertainties=False, make_kromer=False,
-    #       plot_spectra=False, show_figs=False, parallel=False,
+    #       run_uncertainties=True, make_kromer=False,
+    #       plot_spectra=True, plot_abun=False, show_figs=False, parallel=False,
+    #       verbose=True).run_master()  
+
+    #Master(event='11fe', case='12d_C-scan_grid', StoN='medium-high',
+    #       flag_run_simulation=True, flag_compute_features=True,
+    #       run_uncertainties=True, make_kromer=False,
+    #       plot_spectra=True, plot_abun=True, show_figs=False, parallel=False,
     #       verbose=True).run_master()  
 
     #Master(event='fast', case='single', StoN='low',
@@ -103,18 +115,14 @@ if __name__ == '__main__':
     #       plot_spectra=False, show_figs=False, parallel=False,
     #       verbose=True).run_master()  
 
-    Master(event='11fe', case='test_5.9d', StoN='low',
-           flag_run_simulation=False, flag_compute_features=False,
-           run_uncertainties=False, make_kromer=False,
-           plot_spectra=False, plot_abun=True,
-           show_figs=True, parallel=False,
-           verbose=True).run_master()  
-
-    #Master(event='11fe', case='19d_C-scaled', StoN='medium-high',
-    #       flag_run_simulation=True, flag_compute_features=True,
-    #       run_uncertainties=True, make_kromer=False,
-    #       plot_spectra=True, show_figs=False, parallel=False,
+    #Master(event='11fe', case='test_5.9d', StoN='low',
+    #       flag_run_simulation=False, flag_compute_features=False,
+    #       run_uncertainties=False, make_kromer=False,
+    #       plot_spectra=False, plot_abun=True,
+    #       show_figs=True, parallel=False,
     #       verbose=True).run_master()  
+
+
 
     #Master(event='05bl', case='12d_C-scaled_v0', StoN='low',
     #       flag_run_simulation=True, flag_compute_features=True,

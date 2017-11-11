@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 
-import os   
+import os                                                               
+import sys
+import time
+
+path_tardis_output = os.environ['path_tardis_output']
+
 import math
-import pickle
+import cPickle
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -11,6 +16,7 @@ from master_run import Master
 from append_features import Analyse_Features
 from input_pars import Input_Parameters as class_input
 from scipy.signal import savgol_filter
+from matplotlib.ticker import MultipleLocator
 
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
 #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= QUICK TEST =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=                          
@@ -82,7 +88,7 @@ class Feature_Test(object):
 
         file_path = yml_list[0].split('.yml')[0]
         with open(file_path + '.pkl', 'r+') as inp:
-            D = pickle.load(inp)
+            D = cPickle.load(inp)
             print '\n\nComparison of a few quantities. The default values are'\
             ' from previous calculations made in stable versions of the code,'\
             ' when the test case - event: fast, case: single, is run with a '\
@@ -219,7 +225,7 @@ class Feature_Test(object):
                 for fname in os.listdir(subdir_fullpath): 
                     if fname.endswith('.pkl'):
                         with open(subdir_fullpath + fname) as inp:
-                            pkl = pickle.load(inp) 
+                            pkl = cPickle.load(inp) 
                             quantity_list.append(pkl[self.q + '_' + self.n])
                             unc_list.append(pkl[self.q + '_unc_' + self.n])
                             
@@ -331,14 +337,117 @@ class Compute_Smoothing_Factor(object):
     def run_smoothing_factor(self):
         self.make_mock_spectrum()
         self.compute_factors()
+   
+class Plot_11fe_Sequence(object):
+    """Whenever TARDIS is updated to a new version, one can call this class
+    to run and plot the spectra of 11fe at maximum, at the correct luminosity
+    and a cooler version. Visual inspection of the plot serves a basis to 
+    check whether the update is behaving accordingly.
+    """
+    
+    def __init__(self, show_fig=True, save_fig=False):
 
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-= MAIN =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=                          
-#=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=#
+        self.show_fig = show_fig
+        self.save_fig = save_fig 
+        self.fig, self.ax = plt.subplots(figsize=(10.,18))
 
+        self.obs_list = [
+          '2011_08_25', '2011_08_28', '2011_08_31', '2011_09_03',
+          '2011_09_07', '2011_09_10', '2011_09_13', '2011_09_19']
+        
+        self.syn_list = [
+          ['7.903', '13300', '3.7'], ['8.505', '12400', '5.9'],
+          ['9.041', '11300', '9.0'], ['9.362', '10700', '12.1'],
+          ['9.505', '9000', '16.1'], ['9.544', '7850', '19.1'],
+          ['9.505', '6700', '22.4'], ['9.362', '4550', '28.3']]  
+
+        self.make_plot()     
+        
+    def set_fig_frame(self):
+        """Define the configuration of the figure axes."""
+        x_label = r'$\mathrm{rest \ wavelength} \ \mathrm{[\AA}]}$'
+        y_label = r'$\mathrm{Relative \ f}_{\lambda}$'
+        
+        fs = 26.
+        self.ax.set_xlabel(x_label,fontsize=fs)
+        self.ax.set_ylabel(y_label,fontsize=fs)
+        self.ax.set_xlim(1500., 10000.)
+        self.ax.set_ylim(-5.5, 12.)      
+        self.ax.tick_params(axis='y', which='major', labelsize=fs, pad=8)      
+        self.ax.tick_params(axis='x', which='major', labelsize=fs, pad=8)
+        self.ax.minorticks_on()
+        self.ax.tick_params('both', length=8, width=1, which='major')
+        self.ax.tick_params('both', length=4, width=1, which='minor')
+        self.ax.xaxis.set_minor_locator(MultipleLocator(500.))
+        self.ax.xaxis.set_major_locator(MultipleLocator(1000.))
+        self.ax.yaxis.set_minor_locator(MultipleLocator(0.5))
+        self.ax.yaxis.set_major_locator(MultipleLocator(2.))        
+        self.ax.tick_params(labelleft='off')  
+
+    def load_and_plot_observational_spectrum(self):
+        
+        directory = '/home/heringer/Research/routines_11fe-05bl/INPUT_FILES/'\
+                    + 'observational_spectra/2011fe/'
+        
+        offset = 9.
+        for date in self.obs_list:
+            with open(directory + date + '.pkl', 'r') as inp:
+                pkl = cPickle.load(inp)
+                self.ax.plot(
+                  pkl['wavelength_corr'], pkl['flux_smoothed'] + offset,
+                  color='k', ls='-', lw=3., zorder=2.)
+            offset -= 2.  
+                    
+    def load_and_plot_synthetic_spectrum(self):
+        
+        def make_fpath(L, v, t):
+            fname = ('line_interaction-downbranch_loglum-' + L
+                    + '_velocity_start-' + v + '_time_explosion-' + t)
+            return (path_tardis_output + '11fe_default_L-scaled/' + fname
+                    + '/' + fname + '.pkl')
+        
+        syn_fpath_list = [make_fpath(s[0], s[1], s[2]) for s in self.syn_list]    
+                    
+        offset = 9.
+        for fpath in syn_fpath_list:
+            with open(fpath, 'r') as inp:
+                pkl = cPickle.load(inp)
+                self.ax.plot(
+                  pkl['wavelength_corr'], pkl['flux_smoothed'] + offset,
+                  color='b', ls='-', lw=3., zorder=2.)
+            offset -= 2.                      
+
+    def add_text(self):
+        offset = 9.
+        for s in self.syn_list:
+            self.ax.text(1800., offset + 0.4, s[2] + ' d',
+                         fontsize=20., horizontalalignment='left')        
+            offset -= 2.                      
+                    
+    def save_figure(self):        
+        if self.save_fig:
+            directory = './../OUTPUT_FILES/FIGURES/'
+            plt.savefig(directory + 'Fig_11fe_sequence.png',
+                        format='png', dpi=360)
+
+    def make_plot(self):
+        self.set_fig_frame()
+        self.load_and_plot_observational_spectrum()
+        self.load_and_plot_synthetic_spectrum()
+        self.add_text()
+        plt.grid(False)
+        plt.tight_layout()
+        self.save_figure()
+        if self.show_fig:
+            plt.show()
+        plt.close()    
+
+    
 if __name__ == '__main__':
 
-    Quick_Test()
+    Plot_11fe_Sequence()
+    
+    #Quick_Test()
                 
     #Feature_Test(test_case='single')
     #Feature_Test(test_case='kromer')
