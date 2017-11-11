@@ -445,7 +445,7 @@ class Plot_11fe_Sequence(object):
     
 if __name__ == '__main__':
 
-    Plot_11fe_Sequence()
+    #Plot_11fe_Sequence()
     
     #Quick_Test()
                 
