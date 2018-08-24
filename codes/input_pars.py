@@ -1,26 +1,50 @@
 #!/usr/bin/env python
 
 import numpy as np
+import tardis
 from density_interpolator import rho11fe_velocity_to_density
+
+tardis_path = tardis.__path__[0]
+
+def L2logL(_L):
+    return str(format(np.log10(_L), '.3f'))
+
+t_11fe = ['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3'] 
+t2L_11fe = {
+  '3.7': L2logL(0.08e9), '5.9': L2logL(0.32e9), '9.0': L2logL(1.1e9),
+  '12.1': L2logL(2.3e9), '16.1': L2logL(3.2e9), '19.1': L2logL(3.5e9),
+  '22.4': L2logL(3.2e9), '28.3': L2logL(2.3e9)}
+t2vphot_11fe = {
+  '3.7': '13300', '5.9': '12400', '9.0': '11300', '12.1': '10700',
+  '16.1': '9000', '19.1': '7850', '22.4': '6700', '28.3': '4550'}
 
 class Input_Parameters(object):
     """Set input parameters for running TARDIS.
     """
 
-    def __init__(self, event, case=None, StoN=None, run_uncertainties=False):
+    def __init__(self, event, case=None, StoN=None, custom_par=None,
+                 run_uncertainties=False):
         
         self.event = event
+        self.custom_par = custom_par
         self.run_uncertainties = run_uncertainties
         self.smoothing_window = 21
         self.N_MC_runs = 3000
         
         #Variables that are common amonng all pre-defined events. 
-        self.atomic_data = 'kurucz_cd23_chianti_H_He.h5'
+        self.atomic_data = tardis_path + '/data/kurucz_cd23_chianti_H_He.h5'
         self.spec_start = '500'
         self.spec_stop = '20000'
         self.spec_num = '10000'       
-        self.seeds = '23111963'
+        #self.seeds = '23111963'
+        self.seeds = '23111970'
+        self.delta = 'Default'
 
+        #Set nlte species.
+        self.ntle = ''
+
+        self.el_setting = {'el': 'None', 'v_start': '0', 'v_stop': '100000',
+                          'set_value': '0.0'}
         self.el_adding = {'el': 'None', 'v_start': '0', 'v_stop': '100000',
                           'add': '0.0'}
         self.el1_scaling = {'el': 'None', 'v_start': '0', 'v_stop': '100000',
@@ -30,12 +54,18 @@ class Input_Parameters(object):
 
         self.elements = [
           'H', 'He', 'Li', 'B', 'Be', 'C', 'N', 'O', 'F', 'Ne', 'Na',
-          'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V',
-          'Cr', 'Mn', 'Fe56', 'Fe58', 'Co', 'Ni56', 'Ni58', 'Cu', 'Zn'] 
-          
+          'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc',
+          'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Fe0', 'Ni0'] 
+
+        #Publication quality.
+        if StoN == 'super-high':
+            self.num_packs = '2.0e+5'
+            self.iterations = '20'
+            self.last_num_packs = '2.0e+6'
+            self.num_virtual_packs = '5'
           
         #Publication quality.
-        if StoN == 'high':
+        elif StoN == 'high':
             self.num_packs = '2.0e+5'
             self.iterations = '20'
             self.last_num_packs = '5.0e+5'
@@ -60,7 +90,8 @@ class Input_Parameters(object):
         #For fast runs.
         elif StoN == 'low':
             self.num_packs = '1.0e+4'
-            self.iterations = '15'
+            #self.iterations = '15'
+            self.iterations = '9'
             self.last_num_packs = '1.0e+4'
             self.num_virtual_packs = '5'
 
@@ -82,8 +113,8 @@ class Input_Parameters(object):
             #Used to check functionality of supporting codes.
             
             self.subdir = 'test-kromer/'
-            self.luminosity = '9.44'
-            #self.luminosity = '9.05'
+            #self.luminosity = '9.44'
+            self.luminosity = '9.05'
             self.time_explosion = '13.0' 
             self.velocity_start = '11000'
             self.velocity_stop = '20000'
@@ -93,7 +124,7 @@ class Input_Parameters(object):
             self.ionization = 'nebular'
             self.excitation = 'dilute-lte'
             self.rad_rates_type = 'dilute-blackbody'
-            self.line_interaction = 'macroatom'
+            self.line_interaction = 'downbranch'
             self.extinction = 0.
 
             self.structure_num = '20'
@@ -118,15 +149,17 @@ class Input_Parameters(object):
             self.abun['Ti'] = ['0.00']
             self.abun['Ar'] = ['0.04']
             '''
+            
             self.abun['Ni0'] = ['0.0']
-            self.abun['Si'] = ['0.52']
+            self.abun['Si'] = ['0.22']
             self.abun['Fe0'] = ['0.0']
             self.abun['Co'] = ['0.0']
             self.abun['Ca'] = ['0.03']
             self.abun['S'] = ['0.19']
             self.abun['Mg'] = ['0.03']
             self.abun['Na'] = ['0.0']
-            self.abun['C'] = ['0.0']
+            self.abun['He'] = ['0.1']
+            self.abun['C'] = ['0.2']
             self.abun['O'] = ['0.18']
             self.abun['Ti'] = ['0.01']
             self.abun['Ar'] = ['0.04']
@@ -134,8 +167,9 @@ class Input_Parameters(object):
             #=-=-=-=-= Pre-defined cases with simulation parameters.=-=-=-=-=#
             
             if case == 'single':
-                self.subdir = 'fast_single_blank/'
+                self.subdir = 'fast_single_blank_up/'
                 self.seeds = [self.seeds]
+                self.delta = '1'
             elif case == 'multiple':
                 self.subdir = 'fast_multiple/'
                 self.seeds = list(np.arange(1,201,1).astype(int).astype(str))
@@ -334,6 +368,45 @@ class Input_Parameters(object):
                 self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']
                 self.line_interaction = ['downbranch'] * 8 #Similar to original work.
 
+                #self.subdir = '11fe_t37_kromer/'
+                #self.luminosity = [self.luminosity[0]]
+                #self.time_explosion = [self.time_explosion[0]]
+                #self.velocity_start = [self.velocity_start[0]]
+                #self.line_interaction = [self.line_interaction[0]]
+
+            #Used to compute the default tomography analysis.
+            elif case == 'best_delta':    
+                self.subdir = '11fe_best_delta/'
+                self.luminosity  = [str(format(np.log10(l), '.3f')) for l in [0.08e9, 0.32e9, 1.1e9, 2.3e9, 3.2e9, 3.5e9, 3.2e9, 2.3e9]]
+                self.time_explosion = ['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3'] 
+                self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']
+                self.line_interaction = ['downbranch'] * 8 #Similar to original work.
+                self.delta = '1'
+
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '13300',
+                                    'factors': ['0.2'] * 8} 
+                self.el2_scaling = {'el': 'C', 'v_start': '13300', 'v_stop': '16000',
+                                    'factors': ['1.00'] * 8}   
+
+            #Used to compute 11fe models that are slightly hotter to check
+            #what happens to the carbon trough.
+            elif case == 'best_hot':    
+                self.subdir = '11fe_best_hot/'
+                self.luminosity  = [str(format(np.log10(l * 1.3), '.3f')) for l in [0.32e9, 1.1e9, 2.3e9, 3.2e9, 3.5e9]]
+                self.time_explosion = ['5.9', '9.0', '12.1', '16.1', '19.1'] 
+                self.velocity_start = ['12400', '11300', '10700', '9000', '7850']
+                self.line_interaction = ['downbranch'] * 5 #Similar to original work.
+
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '13300',
+                                    'factors': ['0.2'] * 5} 
+                self.el2_scaling = {'el': 'C', 'v_start': '13300', 'v_stop': '16000',
+                                    'factors': ['1.00'] * 5}   
+                                    
+                                    
             #Compute spectra with standard settings, where L is scaled by
             #1, 1/2, 1/3 and 1/4.
             elif case == 'default_L-scaled':    
@@ -342,76 +415,10 @@ class Input_Parameters(object):
                 lum = [np.log10(l) for l in [0.08e9, 0.32e9, 1.1e9, 2.3e9, 3.2e9, 3.5e9, 3.2e9, 2.3e9]]
                 for scale in [1., 0.5, 0.33, 0.25]:
                     self.luminosity += [str(format(np.log10(10.**l * scale), '.3f')) for l in list(lum)]        
-                self.luminosity = self.luminosity * 2 #One for each line_int mode.                
-                self.time_explosion = ['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3']*8
-                self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']*8      
-                self.line_interaction = ['downbranch'] * 32 + ['macroatom'] * 32
-                
-            #Used to compute L-grid.
-            elif case == 'L-grid':    
-                self.subdir = '11fe_L-grid_UP/'   
-                self.luminosity = [str(format(l, '.3f')) for l in np.log10(np.logspace(8.544, 9.72, 20))]
-                self.luminosity = self.luminosity * 2 #One for each line_int mode.
-                self.time_explosion = '19.1'    
-                self.velocity_start = '7850'
-                self.line_interaction = ['downbranch'] * 20 + ['macroatom'] * 20
+                self.time_explosion = ['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3']*4
+                self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']*4     
+                self.line_interaction = ['downbranch'] * 32
 
-            #Used to compute Ti-grid.
-            elif case == 'Ti-grid':    
-                self.subdir = '11fe_Ti-grid/'   
-                self.luminosity = ([str(format(np.log10(3.5e9), '.3f'))] * 10        
-                                   + [str(format(np.log10(3.5e9 / 4.), '.3f'))] * 10)        
-                self.luminosity = self.luminosity * 2 #One for each line_int mode.
-                self.time_explosion = '19.1'    
-                self.velocity_start = '7850'
-                self.TiCr_scaling = ['0.00', '0.05', '0.1', '0.2', '0.5', '1.00',
-                                     '2.00', '5.00', '10.00', '20.00'] * 4
-                self.line_interaction = ['downbranch'] * 20 + ['macroatom'] * 20
-
-            #Used to compute Fe-grid.
-            elif case == 'Fe-grid':    
-                self.subdir = '11fe_Fe-grid/'   
-                self.luminosity = ([str(format(np.log10(3.5e9), '.3f'))] * 10        
-                                   + [str(format(np.log10(3.5e9 / 4.), '.3f'))] * 10)        
-                self.luminosity = self.luminosity * 2 #One for each line_int mode.
-                self.time_explosion = '19.1'    
-                self.velocity_start = '7850'
-                self.Fe_scaling = ['0.00', '0.05', '0.1', '0.2', '0.5', '1.00',
-                                     '2.00', '5.00', '10.00', '20.00'] * 4
-                self.line_interaction = ['downbranch'] * 20 + ['macroatom'] * 20                
-
-            #Used to compute a 2D grid in luminosity and Fe.
-            elif case == 'L_Fe-grid_19d':    
-                self.subdir = '11fe_L_Fe-grid/'   
-                self.luminosity = [str(format(l, '.3f')) for l in
-                                   np.log10(np.logspace(
-                                   np.log10(3.5e9 / 4), np.log10(3.5e9 * 1.5), 15))]      
-                self.luminosity = self.luminosity * 10 #One for each Fe value.
-                Fe_list = ['0.00', '0.05', '0.1', '0.2', '0.5', '1.00',
-                           '2.00', '5.00', '10.00', '20.00']
-                self.Fe_scaling = []
-                for Fe in Fe_list:
-                    self.Fe_scaling += [Fe] * 15 #One for each L value.
-                self.time_explosion = '19.1'    
-                self.velocity_start = '7850'
-                self.line_interaction = ['downbranch'] * 150
-
-            #Used to compute a 2D grid in luminosity and Fe.
-            elif case == 'L_Fe-grid_12d':    
-                self.subdir = '11fe_L_Fe-grid_12d/'   
-                self.luminosity = [str(format(l, '.3f')) for l in
-                                   np.log10(np.logspace(
-                                   np.log10(2.3e9 / 4), np.log10(2.3e9 * 1.5), 15))]      
-                self.luminosity = self.luminosity * 10 #One for each Fe value.
-                Fe_list = ['0.00', '0.05', '0.1', '0.2', '0.5', '1.00',
-                           '2.00', '5.00', '10.00', '20.00']
-                self.Fe_scaling = []
-                for Fe in Fe_list:
-                    self.Fe_scaling += [Fe] * 15 #One for each L value.
-                self.time_explosion = '12.1'    
-                self.velocity_start = '10700'
-                self.line_interaction = ['downbranch'] * 150
-    
             #Change photosphere position at pre-maximum using 05bl luminosity.
             elif case == 'vphoto_premax':
                 self.subdir = '11fe_vphoto_premax/'                     
@@ -436,332 +443,55 @@ class Input_Parameters(object):
                 self.velocity_start = ['3050', '3600', '4550', '5500', '6500'] * 2
                 self.line_interaction = 'downbranch' #Similar to original work.
 
-
-            #Used to test the presence of the carbon trough -- run with kromer plots
-            #texp= 12, 16 and 19 days. L scaled by 1, 0.5 and 0.25.
-            elif case == 'kromer_L-scaled':
-                self.subdir = '11fe_kromer_L-scaled/'                     
-                self.luminosity = []
-                lum = [np.log10(l) for l in [2.3e9, 3.2e9, 3.5e9]]
-                for scale in [1., 0.5, 0.25]:
-                    self.luminosity += [str(format(np.log10(10.**l * scale), '.3f')) for l in list(lum)]        
-                self.time_explosion = ['12.1', '16.1', '19.1'] * 3
-                self.velocity_start = ['10700', '9000', '7850'] * 3
-                #self.line_interaction = 'downbranch' #Similar to original work.
-                self.line_interaction = ['macroatom'] * 9 #Similar to original work.
-
-            #Change time explosion at pre-maximum for 05bl Lum.
-            elif case == 'texp_premax':
-                self.subdir = '11fe_texp_premax/' 
-                self.luminosity =    '8.617'
-                self.time_explosion = ['6', '7', '8', '9', '12.1', '13', '14']   
-                self.velocity_start = '10700'
-                self.line_interaction = 'downbranch' #Similar to original work.
-
-            #Note that at maximum the spectrum already agrees.
-            #Change time explosion at post-maximum for 05bl Lum.
-            elif case == 'texp_postmax':
-                self.luminosity =    '8.594'
-                self.time_explosion = ['23', '25', '28.3', '30', '32', '34']   
-                self.velocity_start = '4550'
-                self.line_interaction = 'downbranch' #Similar to original work.
-
-            elif case == 'early_2D-grid':
-                self.subdir = 'early-carbon-grid_kromer_new2/'     
-
-                #L_scal = np.arange(0.6, 2.01, 0.1)
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(0.32e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 10
-                
-                #scales = ['0.00', '0.05', '0.10', '0.20', '0.50',
-                #          '1.00', '2.00', '5.00', '10.00', '20.00']
-
-                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00',
-                          '10.00', '20.00', '50.00', '100.00']
-                                
-                #By default, Fe will be scaled at the expense of the most 
-                #abundant element, which is Si in this case.
-                Fe_scaling = []
-                for s in scales:                    
-                    Fe_scaling += [s] * 15
-                                            
-                self.time_explosion = '5.9'    
-                self.velocity_start = '12400'
-                self.line_interaction = ['macroatom'] * 150  
-                self.el1_scaling = {'el': 'Fe0', 'v_start': 17000.,
-                                    'v_stop': 1.e6, 'factors': Fe_scaling}                
-
-            elif case == 'early_2D-grid_no-C':
-                self.subdir = 'early-carbon-grid_no-C_new/'     
-                
-                #Exclude the layers that are nearly 100% carbon, as one
-                #cannot scale another element to be 100% without significantly
-                #changing the ejecta.
-                #self.velocity_stop = '16800'
-                L_scal = np.arange(0.6, 2.01, 0.1)
-                self.luminosity = [self.lum2loglum(0.32e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 10
-                
-                scales = ['0.00', '0.05', '0.10', '0.20', '0.50',
-                          '1.00', '2.00', '5.00', '10.00', '20.00']
-                                
-                #By default, Fe will be scaled at the expense of the most 
-                #abundant element, which is Si in this case.
-                Fe_scaling = []
-                for s in scales:                    
-                    Fe_scaling += [s] * 15
-                                            
-                self.time_explosion = '5.9'    
-                self.velocity_start = '12400'
-                self.line_interaction = ['macroatom'] * 150  
-                self.el1_scaling = {'el': 'Fe0', 'v_start': 13100.,
-                                    'v_stop': 1.e6, 'factors': Fe_scaling}               
-                self.el2_scaling = {'el': 'C', 'v_start': 13100.,
-                                    'v_stop': 1.e6, 'factors': '0.0'}   
-
-            elif case == '6d_2D-grid_v19590':
-                self.subdir = '11fe_2D-grid_6d_v19590_UP/'     
-
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(0.32e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 10
-
-                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00',
-                          '10.00', '20.00', '50.00', '100.00']
-                                
-                #By default, Fe will be scaled at the expense of the most 
-                #abundant element, which is Si in this case.
-                Fe_scaling = []
-                for s in scales:                    
-                    Fe_scaling += [s] * 15
-                                            
-                self.time_explosion = '5.9'    
-                self.velocity_start = '12400'
-                self.line_interaction = ['macroatom'] * 150  
-                self.el1_scaling = {'el': 'Fe0', 'v_start': 19590.,
-                                    'v_stop': 1.e6, 'factors': Fe_scaling} 
-            
-            
-            elif case == '12d_2D-grid_v19590':
-                self.subdir = '11fe_2D-grid_12d_v19590_UP/'     
-
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(2.3e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 10
-
-                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00',
-                          '10.00', '20.00', '50.00', '100.00']
-                                
-                #By default, Fe will be scaled at the expense of the most 
-                #abundant element, which is Si in this case.
-                Fe_scaling = []
-                for s in scales:                    
-                    Fe_scaling += [s] * 15
-                                            
-                self.time_explosion = '12.1'    
-                self.velocity_start = '10700'
-                self.line_interaction = ['macroatom'] * 150  
-                self.el1_scaling = {'el': 'Fe0', 'v_start': 19590.,
-                                    'v_stop': 1.e6, 'factors': Fe_scaling} 
-
-            elif case == '19d_2D-grid_v19590':
-                self.subdir = '11fe_2D-grid_19d_v19590_UP/'     
-
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(3.5e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 10
-
-                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00',
-                          '10.00', '20.00', '50.00', '100.00']
-                                
-                #By default, Fe will be scaled at the expense of the most 
-                #abundant element, which is Si in this case.
-                Fe_scaling = []
-                for s in scales:                    
-                    Fe_scaling += [s] * 15
-                                            
-                self.time_explosion = '19.1'    
-                self.velocity_start = '7850'
-                self.line_interaction = ['macroatom'] * 150  
-                self.el1_scaling = {'el': 'Fe0', 'v_start': 19780.,
-                                    'v_stop': 1.e6, 'factors': Fe_scaling} 
-            
-            
-
-
-            elif case == '6d_2D-grid_v13400':
-                self.subdir = '11fe_2D-grid_6d_v13400_UP/'     
-
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(0.32e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 10
-
-                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00',
-                          '10.00', '20.00', '50.00', '100.00']
-                                
-                #By default, Fe will be scaled at the expense of the most 
-                #abundant element, which is Si in this case.
-                Fe_scaling = []
-                for s in scales:                    
-                    Fe_scaling += [s] * 15
-                                            
-                self.time_explosion = '5.9'    
-                self.velocity_start = '12400'
-                self.line_interaction = ['macroatom'] * 150  
-                self.el1_scaling = {'el': 'Fe0', 'v_start': 13400.,
-                                    'v_stop': 1.e6, 'factors': Fe_scaling} 
-            
-            
-            elif case == '12d_2D-grid_v13400':
-                self.subdir = '11fe_2D-grid_12d_v13400_UP/'     
-
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(2.3e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 10
-
-                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00',
-                          '10.00', '20.00', '50.00', '100.00']
-                                
-                #By default, Fe will be scaled at the expense of the most 
-                #abundant element, which is Si in this case.
-                Fe_scaling = []
-                for s in scales:                    
-                    Fe_scaling += [s] * 15
-                                            
-                self.time_explosion = '12.1'    
-                self.velocity_start = '10700'
-                self.line_interaction = ['macroatom'] * 150  
-                self.el1_scaling = {'el': 'Fe0', 'v_start': 13400.,
-                                    'v_stop': 1.e6, 'factors': Fe_scaling} 
-
-            elif case == '19d_2D-grid_v13400':
-                self.subdir = '11fe_2D-grid_19d_v13400_UP/'     
-
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(3.5e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 10
-
-                scales = ['0.00', '0.20', '0.50', '1.00', '2.00', '5.00',
-                          '10.00', '20.00', '50.00', '100.00']
-                                
-                #By default, Fe will be scaled at the expense of the most 
-                #abundant element, which is Si in this case.
-                Fe_scaling = []
-                for s in scales:                    
-                    Fe_scaling += [s] * 15
-                                            
-                self.time_explosion = '19.1'    
-                self.velocity_start = '7850'
-                self.line_interaction = ['macroatom'] * 150  
-                self.el1_scaling = {'el': 'Fe0', 'v_start': 13400.,
-                                    'v_stop': 1.e6, 'factors': Fe_scaling}             
-            
-            
-            elif case == '12d_C-scaled':
-                self.subdir = '11fe_12d_C-scaled/'     
-
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(2.3e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 12
-
-                scales = ['0.00', '0.01', '0.02', '0.05', '0.10', '0.20',
-                          '0.50', '1.00', '2.00', '5.00', '10.00', '20.00']
-
-                C_scaling = []
-                for s in scales:                    
-                    C_scaling += [s] * 15
-                                            
-                self.time_explosion = '12.1'    
-                self.velocity_start = '10700'
-                self.line_interaction = 'downbranch' 
-                self.el1_scaling = {'el': 'C', 'v_start': '0', 'v_stop': '100000',
-                                    'factors': C_scaling} 
-
-            elif case == '16d_C-scaled':
-                self.subdir = '11fe_16d_C-scaled/'     
-
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(3.2e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 12
-
-                scales = ['0.00', '0.01', '0.02', '0.05', '0.10', '0.20',
-                          '0.50', '1.00', '2.00', '5.00', '10.00', '20.00']
-
-                C_scaling = []
-                for s in scales:                    
-                    C_scaling += [s] * 15
-                                            
-                self.time_explosion = '16.1'    
-                self.velocity_start = '9000'
-                self.line_interaction = 'downbranch' 
-                self.el1_scaling = {'el': 'C', 'v_start': '0', 'v_stop': '100000',
-                                    'factors': C_scaling} 
-
-            elif case == '19d_C-scaled':
-                self.subdir = '11fe_19d_C-scaled/'     
-
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(3.5e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 12
-
-                scales = ['0.00', '0.01', '0.02', '0.05', '0.10', '0.20',
-                          '0.50', '1.00', '2.00', '5.00', '10.00', '20.00']
-
-                C_scaling = []
-                for s in scales:                    
-                    C_scaling += [s] * 15
-                                            
-                self.time_explosion = '19.1'    
-                self.velocity_start = '7850'
-                self.line_interaction = 'downbranch' 
-                self.el1_scaling = {'el': 'C', 'v_start': '0', 'v_stop': '100000',
-                                    'factors': C_scaling} 
-            
-            #Test case.
-            elif case == 'test_5.9d':       
-                self.subdir = '11fe_test_5.9d/'     
-
-                self.luminosity = [str(format(np.log10(0.32e9), '.3f'))] * 2
-                self.time_explosion = '5.9'    
-                self.velocity_start = '12400'
-                self.line_interaction = 'downbranch'                
-                
-                #self.luminosity = ['9.544']
-                #self.time_explosion = '19.1'    
-                #self.velocity_start = '7850'
-                #self.line_interaction = 'macroatom'
-                self.el1_scaling = {'el': 'Z', 'v_start': ['15000', '15000'],
-                                    'v_stop': '100000', 'factors': ['0.1', '3.0']}   
-                #self.el1_scaling = {'el': 'Mg', 'v_start': ['12400', '14000'],
-                #                    'v_stop': '100000', 'factors': ['0.1', '0.1']}            
-                #self.el2_scaling = {'el': 'Ca', 'v_start': 12400.,
-                #                   'v_stop': 1.e6, 'factors': ['5.0']} 
+            #Makes Fig. 1 of the carbon paper.
+            elif case == 'C-scan':
+                t2vstop = {'3.7': 13000., '5.9': 12000., '9.0': 11000.,
+                           '12.1': 10500, '16.1': 8500., '19.1': 7500.}
            
-            elif case == '12d_C-scan':
-                self.subdir = '11fe_12d_C-scan/'     
-
-                self.luminosity = self.lum2loglum(2.3e9)                
-
-                v_stop = list(np.arange(10500., 15000., 500.).astype('int').astype('str'))
-                self.time_explosion = '12.1'    
-                self.velocity_start = '10700'
+                _t = self.custom_par
+                self.subdir = '11fe_' + str(int(float(_t))) + 'd_C-scan/'     
+                self.luminosity = t2L_11fe[_t]
+                self.time_explosion = _t    
+                self.velocity_start = t2vphot_11fe[_t]
+                v_stop = np.arange(t2vstop[_t], 15000., 500.)
+                v_stop = list(v_stop.astype('int').astype('str'))
                 self.line_interaction = 'downbranch' 
                 self.el1_scaling = {'el': 'C', 'v_start': '0',
                                     'v_stop': v_stop, 'factors': '0'}
             
-            elif case == '12d_C-scan_grid':
-                self.subdir = '11fe_12d_C-scan_grid/'     
+            elif case == '6d_C-scan':
+                self.subdir = '11fe_6d_C-scan/'     
 
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(2.3e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 9
+                v_stop_list = list(np.arange(12000., 15000., 500.).astype('int').astype('str'))
+                self.luminosity = [self.lum2loglum(0.32e9)]                
+                self.luminosity = self.luminosity * len(v_stop_list)
 
-                v_stop = list(np.arange(10500., 15000., 500.).astype('int').astype('str'))
+                self.time_explosion = '5.9'    
+                self.velocity_start = '12400'
+                self.line_interaction = 'downbranch' 
+                self.el1_scaling = {'el': 'C', 'v_start': '0',
+                                    'v_stop': v_stop_list, 'factors': '0'}
 
-                v_stop_list = []
-                for v_s in v_stop:                    
-                    v_stop_list += [v_s] * 15
+            elif case == '9d_C-scan':
+                self.subdir = '11fe_9d_C-scan/'     
+
+                v_stop_list = list(np.arange(11000., 15000., 500.).astype('int').astype('str'))
+                self.luminosity = [self.lum2loglum(1.1e9)]                
+                self.luminosity = self.luminosity * len(v_stop_list)
+
+                self.time_explosion = '9.0'    
+                self.velocity_start = '11300'
+                self.line_interaction = 'downbranch' 
+                self.el1_scaling = {'el': 'C', 'v_start': '0',
+                                    'v_stop': v_stop_list, 'factors': '0'}
+
+           
+            elif case == '12d_C-scan':
+                self.subdir = '11fe_12d_C-scan/'     
+
+                v_stop_list = list(np.arange(10500., 15000., 500.).astype('int').astype('str'))
+                self.luminosity = [self.lum2loglum(2.3e9 )]                
+                self.luminosity = self.luminosity * len(v_stop_list)
 
                 self.time_explosion = '12.1'    
                 self.velocity_start = '10700'
@@ -772,65 +502,304 @@ class Input_Parameters(object):
             elif case == '16d_C-scan':
                 self.subdir = '11fe_16d_C-scan/'     
 
-                self.luminosity = self.lum2loglum(3.2e9)                
+                v_stop_list = list(np.arange(8500., 15000., 500.).astype('int').astype('str'))
+                self.luminosity = [self.lum2loglum(3.2e9)]                
+                self.luminosity = self.luminosity * len(v_stop_list)
 
-                v_stop = list(np.arange(8500., 15000., 500.).astype('int').astype('str'))
                 self.time_explosion = '16.1'    
                 self.velocity_start = '9000'
                 self.line_interaction = 'downbranch' 
                 self.el1_scaling = {'el': 'C', 'v_start': '0',
-                                    'v_stop': v_stop, 'factors': '0'}
+                                    'v_stop': v_stop_list, 'factors': '0'}
 
             elif case == '19d_C-scan':
                 self.subdir = '11fe_19d_C-scan/'     
 
-                self.luminosity = self.lum2loglum(3.5e9)                
+                v_stop_list = list(np.arange(7500., 15000., 500.).astype('int').astype('str'))
+                self.luminosity = [self.lum2loglum(3.5e9) ]                
+                self.luminosity = self.luminosity * len(v_stop_list)
 
-                v_stop = list(np.arange(7500., 15000., 500.).astype('int').astype('str'))
                 self.time_explosion = '19.1'    
                 self.velocity_start = '7850'
                 self.line_interaction = 'downbranch' 
                 self.el1_scaling = {'el': 'C', 'v_start': '0',
-                                    'v_stop': v_stop, 'factors': '0'}
+                                    'v_stop': v_stop_list, 'factors': '0'}
 
-            elif case == '6d_Z-scaled_v13400':
-                self.subdir = '11fe_6d_Z-scaled_v13400/'   
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(0.32e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 12
+            elif case == '6d_C-plateaus_scaling':
+                self.subdir = '11fe_6d_C-plateaus_scaling_SN/'     
+                self.smoothing_window = 7
 
-                scales = ['0.00', '0.01', '0.02', '0.05', '0.10', '0.20',
-                          '0.50', '1.00', '2.00', '5.00', '10.00', '20.00']
-                                
-                Z_scaling = []
-                for s in scales:                    
-                    Z_scaling += [s] * 15
-                                            
+                self.luminosity = self.lum2loglum(0.32e9)                
+                
+                C1_scaling, C2_scaling = [], []
+                scales = ['0.00', '0.05', '0.1', '0.2', '0.5',
+                          '1.00', '2.00', '5.00', '10.00']
+                for s1 in scales:
+                    for s2 in scales:
+                        if float(s2) >= float(s1):
+                           C1_scaling.append(s1)                             
+                           C2_scaling.append(s2)                             
+                
                 self.time_explosion = '5.9'    
                 self.velocity_start = '12400'
-                self.line_interaction = 'downbranch'
-                self.el1_scaling = {'el': 'Z', 'v_start': '13400',
-                                    'v_stop': '100000', 'factors': Z_scaling}
+                self.line_interaction = 'downbranch' 
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '13300',
+                                    'factors': C1_scaling} 
+                self.el2_scaling = {'el': 'C', 'v_start': '13300', 'v_stop': '16000',
+                                    'factors': C2_scaling}  
 
-            elif case == '6d_Z-scaled_v19590':
-                self.subdir = '11fe_6d_Z-scaled_v19590/'   
-                L_scal = np.arange(0.2, 1.61, 0.1)
-                self.luminosity = [self.lum2loglum(0.32e9 * l) for l in L_scal]                
-                self.luminosity = self.luminosity * 12
+            elif case == '9d_C-plateaus_scaling':
+                self.subdir = '11fe_9d_C-plateaus_scaling_SN/'     
+                self.smoothing_window = 7
 
-                scales = ['0.00', '0.01', '0.02', '0.05', '0.10', '0.20',
-                          '0.50', '1.00', '2.00', '5.00', '10.00', '20.00']
-                                
-                Z_scaling = []
-                for s in scales:                    
-                    Z_scaling += [s] * 15
-                                            
-                self.time_explosion = '5.9'    
-                self.velocity_start = '12400'
-                self.line_interaction = 'downbranch'
-                self.el1_scaling = {'el': 'Z', 'v_start': '19590',
-                                    'v_stop': '100000', 'factors': Z_scaling}
+                self.luminosity = self.lum2loglum(1.1e9)                
+                
+                C1_scaling, C2_scaling = [], []
+                scales = ['0.00', '0.05', '0.1', '0.2', '0.5',
+                          '1.00', '2.00', '5.00', '10.00']
+                for s1 in scales:
+                    for s2 in scales:
+                        if float(s2) >= float(s1):
+                           C1_scaling.append(s1)                             
+                           C2_scaling.append(s2)                             
+                
+                self.time_explosion = '9.0'    
+                self.velocity_start = '11300'
+                self.line_interaction = 'downbranch' 
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '13300',
+                                    'factors': C1_scaling} 
+                self.el2_scaling = {'el': 'C', 'v_start': '13300', 'v_stop': '16000',
+                                    'factors': C2_scaling}                         
+            
+            elif case == '12d_C-plateaus_scaling':
+                self.subdir = '11fe_12d_C-plateaus_scaling_SN/'     
+                self.smoothing_window = 7
+
+                self.luminosity = self.lum2loglum(2.3e9)                
+                
+                C1_scaling, C2_scaling = [], []
+                scales = ['0.00', '0.05', '0.1', '0.2', '0.5',
+                          '1.00', '2.00', '5.00', '10.00']
+                for s1 in scales:
+                    for s2 in scales:
+                        if float(s2) >= float(s1):
+                           C1_scaling.append(s1)                             
+                           C2_scaling.append(s2)                             
+                
+                self.time_explosion = '12.1'    
+                self.velocity_start = '10700'
+                self.line_interaction = 'downbranch' 
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '13300',
+                                    'factors': C1_scaling} 
+                self.el2_scaling = {'el': 'C', 'v_start': '13300', 'v_stop': '16000',
+                                    'factors': C2_scaling}   
+
+            elif case == '16d_C-plateaus_scaling':
+                self.subdir = '11fe_16d_C-plateaus_scaling_SN/'     
+                self.smoothing_window = 7
+
+                self.luminosity = self.lum2loglum(3.2e9)                
+                
+                C1_scaling, C2_scaling = [], []
+                scales = ['0.00', '0.05', '0.1', '0.2', '0.5',
+                          '1.00', '2.00', '5.00', '10.00']
+                for s1 in scales:
+                    for s2 in scales:
+                        if float(s2) >= float(s1):
+                           C1_scaling.append(s1)                             
+                           C2_scaling.append(s2)                             
+                
+                self.time_explosion = '16.1'    
+                self.velocity_start = '9000'
+                self.line_interaction = 'downbranch' 
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '13300',
+                                    'factors': C1_scaling} 
+                self.el2_scaling = {'el': 'C', 'v_start': '13300', 'v_stop': '16000',
+                                    'factors': C2_scaling}   
                                     
+                                                                        
+            elif case == '19d_C-plateaus_scaling':
+                self.subdir = '11fe_19d_C-plateaus_scaling_SN/'     
+                self.smoothing_window = 7
+
+                self.luminosity = self.lum2loglum(3.5e9)                
+                
+                C1_scaling, C2_scaling = [], []
+                scales = ['0.00', '0.05', '0.1', '0.2', '0.5',
+                          '1.00', '2.00', '5.00', '10.00']
+                for s1 in scales:
+                    for s2 in scales:
+                        if float(s2) >= float(s1):
+                           C1_scaling.append(s1)                             
+                           C2_scaling.append(s2)                             
+                
+                self.time_explosion = '19.1'    
+                self.velocity_start = '7850'
+                self.line_interaction = 'downbranch' 
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '13300',
+                                    'factors': C1_scaling} 
+                self.el2_scaling = {'el': 'C', 'v_start': '13300', 'v_stop': '16000',
+                                    'factors': C2_scaling}                         
+
+            elif case == '6d_C-best':
+                self.subdir = '11fe_6d_C-best/'     
+                self.smoothing_window = 7
+
+                self.luminosity = self.lum2loglum(0.32e9)                
+                
+                C1_scaling = ['0.00', '0.2'] * 2
+                C2_scaling = ['2.00', '1.00'] * 2
+                self.line_interaction = ['downbranch'] * 2 + ['macroatom'] * 2
+                self.excitation = ['dilute-lte'] * 4
+                
+                self.time_explosion = '5.9'    
+                self.velocity_start = '12400'
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '13300',
+                                    'factors': C1_scaling} 
+                self.el2_scaling = {'el': 'C', 'v_start': '13300', 'v_stop': '16000',
+                                    'factors': C2_scaling}  
+
+            elif case == '9d_C-best':
+                self.subdir = '11fe_9d_C-best/'     
+                self.smoothing_window = 7
+
+                self.luminosity = self.lum2loglum(1.1e9)                
+                
+                C1_scaling = ['0.00', '0.2'] * 2
+                C2_scaling = ['2.00', '1.00'] * 2
+                self.line_interaction = ['downbranch'] * 2 + ['macroatom'] * 2
+                self.excitation = ['dilute-lte'] * 4                          
+                
+                self.time_explosion = '9.0'    
+                self.velocity_start = '11300'
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '13300',
+                                    'factors': C1_scaling} 
+                self.el2_scaling = {'el': 'C', 'v_start': '13300', 'v_stop': '16000',
+                                    'factors': C2_scaling}                         
+            
+            elif case == '12d_C-best':
+                self.subdir = '11fe_12d_C-best/'     
+                self.smoothing_window = 7
+
+                self.luminosity = self.lum2loglum(2.3e9)                
+                
+                C1_scaling = ['0.00', '0.2'] * 2
+                C2_scaling = ['2.00', '1.00'] * 2
+                self.line_interaction = ['downbranch'] * 2 + ['macroatom'] * 2
+                self.excitation = ['dilute-lte'] * 4                    
+                self.seeds = '23111963'
+                
+                self.time_explosion = '12.1'    
+                self.velocity_start = '10700'
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '13300',
+                                    'factors': C1_scaling} 
+                self.el2_scaling = {'el': 'C', 'v_start': '13300', 'v_stop': '16000',
+                                    'factors': C2_scaling}   
+
+            elif case == '16d_C-best':
+                self.subdir = '11fe_16d_C-best/'     
+                self.smoothing_window = 7
+
+                self.luminosity = self.lum2loglum(3.2e9)                
+                
+                C1_scaling = ['0.00', '0.2'] * 2
+                C2_scaling = ['2.00', '1.00'] * 2
+                self.line_interaction = ['downbranch'] * 2 + ['macroatom'] * 2
+                self.excitation = ['dilute-lte'] * 4                    
+                
+                self.time_explosion = '16.1'    
+                self.velocity_start = '9000'
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '13300',
+                                    'factors': C1_scaling} 
+                self.el2_scaling = {'el': 'C', 'v_start': '13300', 'v_stop': '16000',
+                                    'factors': C2_scaling}   
+                                    
+                                                                        
+            elif case == '19d_C-best':
+                self.subdir = '11fe_19d_C-best/'     
+                self.smoothing_window = 7
+
+                self.luminosity = self.lum2loglum(3.5e9)                
+                
+                C1_scaling = ['0.00', '0.2'] * 2
+                C2_scaling = ['2.00', '1.00'] * 2
+                self.line_interaction = ['downbranch'] * 2 + ['macroatom'] * 2
+                self.excitation = ['dilute-lte'] * 4                          
+                
+                self.time_explosion = '19.1'    
+                self.velocity_start = '7850'
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '13300',
+                                    'factors': C1_scaling} 
+                self.el2_scaling = {'el': 'C', 'v_start': '13300', 'v_stop': '16000',
+                                    'factors': C2_scaling}  
+
+            elif case == '12d_C-neutral':
+                self.subdir = '11fe_12d_C-neutral_test/'     
+
+                self.luminosity = [self.lum2loglum(2.3e9)]           
+                C_scaling = ['10.00']
+                
+                self.luminosity = ['8.5'] * 2 + [self.lum2loglum(2.3e9)] * 2           
+                C_scaling = ['0.00', '10.00'] * 2
+                                            
+                self.time_explosion = '12.1'    
+                self.velocity_start = '10700'
+                self.line_interaction = 'downbranch' 
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '16000',
+                                    'factors': C_scaling}  
+
+
+            elif case == 'W7_C-prof':    
+                self.subdir = '11fe_W7_C-prof/'
+                self.luminosity  = [str(format(np.log10(l), '.3f')) for l in [0.08e9, 0.32e9, 1.1e9, 2.3e9, 3.2e9, 3.5e9, 3.2e9, 2.3e9]]
+                self.time_explosion = ['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3'] 
+                self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']
+                self.line_interaction = 'downbranch'
+
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '20000',
+                                    'set_value': '0.01'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '7850', 'v_stop': '14200',
+                                    'factors': '0.0001'} 
+                self.el2_scaling = {'el': 'C', 'v_start': '14200', 'v_stop': '20000',
+                                    'factors': '50.00'}  
+
+            elif case == 'ddet_C-prof':    
+                self.subdir = '11fe_ddet_C-prof/'
+                self.luminosity  = [str(format(np.log10(l), '.3f')) for l in [0.08e9, 0.32e9, 1.1e9, 2.3e9, 3.2e9, 3.5e9, 3.2e9, 2.3e9]]
+                self.time_explosion = ['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3'] 
+                self.velocity_start = ['13300', '12400', '11300', '10700', '9000', '7850', '6700', '4550']
+                self.line_interaction = 'downbranch'
+
+                self.el_setting = {'el': 'C', 'v_start': '7850', 'v_stop': '18000',
+                                    'set_value': '0.00001'} 
+                self.el1_scaling = {'el': 'C', 'v_start': '13500', 'v_stop': '14500',
+                                    'factors': '15000.00'} 
+                self.el2_scaling = {'el': 'C', 'v_start': '14500', 'v_stop': '18000',
+                                    'factors': '60.00'}  
+            
+            
             else:
                 self.case_error(case, event) 
             
@@ -879,5 +848,3 @@ class Input_Parameters(object):
 
     def lum2loglum(self, lum):
         return str(format(np.log10(lum), '.3f'))
-        
-                                              

@@ -17,7 +17,28 @@ class Make_11fe_file(object):
     """
     Code Description
     ----------
-    TBW
+    
+    Abundance files have datapoints all located at the same mass coordinate,
+    read by digitalizing the published plot and only moving the 'cursor'
+    vertically for each element.
+    
+    The original code used by Mazzali does not interpolate abundances between
+    layers and such the slopes plotted are artificial - in reality the plot
+    should be step wise.
+    
+    Comparing the plotted curves and the info in the paper, one can conclude
+    that the slopes represent the data to the left. For instance X(C) = 98%
+    for v>=19400km/s, therefore a point placed on the steep slope preceding 98%
+    would actually correspond to the value to the left (which is ~13% as there
+    is an actual data point in the slope region.)
+    
+    Velocities are converted from the mass coordinate read from the
+    digitalized abundance plot using the velocity-density plot. Precise
+    velocity number are then adjusted to match the description in the paper
+    where necessary. This is important as some photospheric velocities are
+    placed in a layer transition and one does not want to start at the layer
+    below the correct one.
+    
     """
     
     def __init__(self):
@@ -49,6 +70,7 @@ class Make_11fe_file(object):
         self.density_fine = []
         self.velocity_fine = []
         self.mass_fine = None
+        self.mass2vel = None
      
         self.N_coarse_shells = None
         
@@ -107,67 +129,66 @@ class Make_11fe_file(object):
         #plots. Also note that it is okay for the mass_fine array to have
         #len = len(velocity_fine) - 1.
         self.mass_fine = mass_cord.value - 0.01
-        
-    def interpolate_abun(self, Mass, Abun):
-        
-        #If the last value is smaller than 0.02% (0.0002), then it should 
-        #actually be zero, see original plot in Mazzali's paper.
-        if Abun[-1] < 0.02:
-            Abun[-1] = 0.
-            
-        #Check whether first value should be zero. This is important for C, O
-        #and Mg.
-        if Mass[0] > 0.4:
-            Abun[0] = 0.
-            
-        #For the interpolation to always work, extrapolate the first and last
-        #values to masses 0 and 1.5m by conserving the extreme abundances.
-        Mass = np.asarray([0.] + list(Mass) + [1.5])
-        Abun = np.asarray([Abun[0]] + list(Abun) + [Abun[-1]])
-        
-        mass2abun = interp1d(Mass, Abun, kind='nearest')
-        return mass2abun 
 
-    def load_abundances(self):
-        """ For the Ni curve, the points were there seemed to be a change in
-        slope of the abundance track were recorded by hand. These points will
-        provide the velocity (and consequently mass at were one needs to
-        retrieve the abundances of the other elements.)
-        """
+    def get_mass2vel_conversor(self):
+        avg_velocity = (self.velocity_fine[0:-1] + self.velocity_fine[1:]) / 2.
+        self.mass2vel = interp1d(self.mass_fine, avg_velocity)
+
+    def get_velocity_array(self):  
+        #Use any of the abundance files to retrieve the mass_coarse array,
+        #as all abundance files use the exact same mass coordinates.
         fpath = self.top_dir + '/abundance_Ni0.csv'
 
         self.mass_coarse = np.loadtxt(fpath, dtype=float, delimiter=',', 
-                                      usecols=(0,), unpack=True)   
-           
+                                      usecols=(0,), unpack=True)         
+        
+        self.velocity_coarse = self.mass2vel(self.mass_coarse)
+        self.N_coarse_shells = len(self.mass_coarse)
+        
+        #Make small corrections necessary to match the paper text. Question
+        #marks are modifications based on the photospheric speed used.
+        
+        #velocity_coarse[-3] is ~16500 but should be 16000km/s.
+        self.velocity_coarse[-3] = 15990.
+
+        #velocity_coarse[-6] is ~13600 but should be 13300km/s.
+        self.velocity_coarse[-6] = 13290.        
+
+        #velocity_coarse[-6] is ~11400 but should be 11300km/s?
+        self.velocity_coarse[-9] = 11290.        
+
+        #velocity_coarse[8] is ~9300 but should be 9000km/s.
+        self.velocity_coarse[8] = 8990.        
+
+        #velocity_coarse[4] is ~7900 but should be 7850km/s?
+        self.velocity_coarse[4] = 7840.        
+
+        #velocity_coarse[2] is ~6800 but should be 6700km/s?
+        self.velocity_coarse[2] = 6690. 
+
+        #velocity_coarse[0] is ~4600 but should be 4550km/s?
+        self.velocity_coarse[0] = 4540. 
+                        
+    def load_abundances(self):
         for el in self.el:
             fpath = self.top_dir + '/abundance_' + el + '.csv'
-            mass, abun = np.loadtxt(fpath, dtype=float, delimiter=',', 
-                                    unpack=True)   
+            abun = np.loadtxt(fpath, dtype=float, delimiter=',', usecols=(1,),
+                              unpack=True)   
             
-            mass2abun = self.interpolate_abun(mass, abun)
-            self.abun_coarse[el] = mass2abun(self.mass_coarse) / 100.
+            self.abun_coarse[el] = abun / 100.
+            
+            #There are no zeros in the log plot. So when digitalizing the data,
+            #The 'zero values' were attributed a small number, but they should
+            #actually be zero.
+            self.abun_coarse[el][self.abun_coarse[el] < 1.e-4] = 0.
         
-        self.N_coarse_shells = len(self.mass_coarse)
-
     def enforce_abun_normalization(self):
-        
-        total_per_shell = []
-                
-        for i in range(self.N_coarse_shells):
-            
-            total = 0.
+        for i in range(self.N_coarse_shells):            
+            total = 0.           
             for el in self.el:
                 total += self.abun_coarse[el][i]
-                        
-            #In one of the coarse shells the value of the oxygen abundance
-            #happend to fall in the middle of a steep slope. So the total value
-            #is corrected by adding oxygen.
-            if total < 0.8:
-                self.abun_coarse['O'][i] += 1. - total
-                
-            else:
-                for el in self.el:
-                    self.abun_coarse[el][i] *= 1. / total                            
+            for el in self.el:
+                self.abun_coarse[el][i] *= 1. / total                            
 
     def format_abun_dict(self):
         
@@ -189,11 +210,6 @@ class Make_11fe_file(object):
         self.format_abun_format['Fe'] = nan_array
         self.format_abun_format['Ni'] = nan_array
 
-    def get_velocity_coarse(self):
-        avg_velocity = (self.velocity_fine[0:-1] + self.velocity_fine[1:]) / 2.
-        mass2velocity = interp1d(self.mass_fine, avg_velocity)
-        self.velocity_coarse = mass2velocity(self.mass_coarse)
-        
     def get_density_requested(self):
         vel2dens = interp1d(self.velocity_fine, np.log10(self.density_fine))
         self.density_requested = 10.**vel2dens(self.velocity_requested)
@@ -210,6 +226,7 @@ class Make_11fe_file(object):
         is how the Mazzali code operates, despite the confusing way it is
         plotted (not as steps). Use this procedure for all elements.
         """
+        
         self.abun_requested = {}
         for element in self.el_all:
             self.abun_requested[element] = []
@@ -225,7 +242,7 @@ class Make_11fe_file(object):
             
     def make_output(self):
         
-        fpath = self.top_dir + '/ejecta_layers_test.dat'
+        fpath = self.top_dir + '/ejecta_layers.dat'
         
         #Make header
         line1 = 'shno velocity cum_M logdens'
@@ -379,10 +396,11 @@ class Make_11fe_file(object):
         self.initialize_dict()
         self.load_density()
         self.compute_mass()
+        self.get_mass2vel_conversor()
+        self.get_velocity_array()
         self.load_abundances()
         self.enforce_abun_normalization()
         self.format_abun_dict()
-        self.get_velocity_coarse()
         self.get_density_requested()
         self.get_mass_requested()
         self.get_abun_requested()

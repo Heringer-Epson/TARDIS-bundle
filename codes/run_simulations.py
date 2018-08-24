@@ -7,6 +7,7 @@ import shutil
 import cPickle
 import tardis
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import tardis.tardistools.tardis_kromer_plot as tkp
 import tardis.tardistools.tardis_minimal_model as tmm
@@ -68,35 +69,25 @@ class Simulate_Spectra(object):
     def __init__(self, created_ymlfiles_list,
                  run_uncertainties=True, smoothing_window=21,
                  N_MC_runs=3000, make_kromer=False,
-                 extinction=0., show_figs=False, 
-                 parallel=False, verbose=True):
+                 extinction=0., show_figs=False):
 
-        self.atom_data_dir = os.path.join(os.path.split(tardis.__file__)[0],
-          'data', 'kurucz_cd23_chianti_H_He.h5')
         self.created_ymlfiles_list = created_ymlfiles_list
         self.make_kromer = make_kromer
         self.show_figs = show_figs
         self.extinction = extinction
-        self.parallel = parallel
-        self.verbose = verbose
 
         self.run_uncertainties = run_uncertainties
         self.smoothing_window = smoothing_window
         self.N_MC_runs = N_MC_runs 
 
-        #If running in parallel, force to not show figures.
-        if self.parallel:
-            self.show_figs = False
-
-        if self.verbose:
-            print '----------------------------------------------------'
-            print ('------------ RUNNING TARDIS v'+str(tardis.__version__)
-            +' -----------')
-            print '----------------------------------------------------'
-            print '\n' 
-            
-            print 'DESCRIPTION:'
-            print '    A TARDIS SIMULATION WILL BE CREATED FOR EACH .yml FILE.\n'
+        print '----------------------------------------------------'
+        print ('------------ RUNNING TARDIS v'+str(tardis.__version__)
+        +' -----------')
+        print '----------------------------------------------------'
+        print '\n' 
+        
+        print 'DESCRIPTION:'
+        print '    A TARDIS SIMULATION WILL BE CREATED FOR EACH .yml FILE.\n'
 
     def make_kromer_plot(self, simulation, output, ylim=None):
         minmodel = tmm.minimal_model(mode="virtual")
@@ -192,14 +183,13 @@ class Simulate_Spectra(object):
 
     def run_SIM(self):
         
-        #Function to actually run the simulation -- needed to modularize the
-        #code and potentially run simulations in parallel.
+        #Function to actually run the simulation.
         def perform_run(yml):
             spawn_dir = os.path.dirname(yml) + '/'
             file_prefix = yml.split('/')[-1].split('.yml')[0]            
             outfile = spawn_dir + file_prefix
             
-            simulation = tardis.run_tardis(yml, self.atom_data_dir)  
+            simulation = tardis.run_tardis(yml)  
 
             if self.show_figs:
                 interface.show(simulation)
@@ -212,7 +202,6 @@ class Simulate_Spectra(object):
             
             #Save simulation as hdf.
             simulation.to_hdf(outfile + '.hdf')
-            import pandas as pd
             
             #Create .pkl containg the spectrum and derived qquantities.
             with open(outfile + '.pkl', 'w') as out_pkl:
@@ -226,42 +215,23 @@ class Simulate_Spectra(object):
 
             #Delete the simulation to make sure the memory is being freed.
             del simulation
-        
-        #Instructions to call function that will run tardis.
-        if not self.parallel:
             
-            time_start = time.time()
+        time_start = time.time()
+        for i, yml in enumerate(self.created_ymlfiles_list):            
+            print '\n\nRunning yml #', str(i + 1) + '/'\
+                  + str(len(self.created_ymlfiles_list))
             
-            for i, yml in enumerate(self.created_ymlfiles_list):
-                
-                #Verbose information.
-                print '\n\nRunning yml #', str(i + 1) + '/'\
-                      + str(len(self.created_ymlfiles_list))
-                
-                if i != 0:
-                    completed_sims = float(i)
-                    avg_sim_time = elapsed_time / completed_sims / 3600.
-                    estimated_time = (len(yml) - completed_sims) * avg_sim_time                    
-                    estimated_time = str(format(estimated_time, '.1f'))
-                    print '..Estimated remaining time: ' + estimated_time + 'h\n\n'    
-                
-                perform_run(yml)
-                elapsed_time = time.time() - time_start
-
-        if self.parallel:
+            if i != 0:
+                completed_sims = float(i)
+                avg_sim_time = elapsed_time / completed_sims / 3600.
+                #estimated_time = (len(yml) - completed_sims) * avg_sim_time                    
+                #estimated_time = str(format(estimated_time, '.1f'))
+                #print '..Estimated remaining time: ' + estimated_time + 'h\n\n'    
+            
+            perform_run(yml)
+            elapsed_time = time.time() - time_start 
         
-            processes = [mp.Process(target=perform_run, args=(yml,))
-                                    for yml in self.created_ymlfiles_list]
-
-            #Start parallel processes.
-            for p in processes:
-                p.start()
-            #Exit the parallel processes.
-            for p in processes:
-                p.join()    
-        
-        if self.verbose:            
-            print '\n*** DONE - SUCCESSFUL RUN.'
-            print '           TARDIS version used: ' \
-                  + str(tardis.__version__) + '\n\n'
+        print '\n*** DONE - SUCCESSFUL RUN.'
+        print '           TARDIS version used: ' \
+              + str(tardis.__version__) + '\n\n'
                

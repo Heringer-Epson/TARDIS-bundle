@@ -8,20 +8,22 @@ from run_simulations import Simulate_Spectra
 from append_features import Analyse_Features
 from input_pars import Input_Parameters as class_input
 
+t_11fe = ['3.7', '5.9', '9.0', '12.1', '16.1', '19.1', '22.4', '28.3'] 
+
 class Master(object):
    
     """THIS CODE MAKES THE YML FILES, RUN THE SIMULATIONS AND COMPARE
     THE OUTPUT SPECTRA.
     """
     
-    def __init__(self, event, case, StoN,
+    def __init__(self, event, case, StoN, custom_par=None,
                  flag_run_simulation=True, flag_compute_features=True, 
                  run_uncertainties=False, make_kromer=False,
-                 plot_spectra=False, plot_abun=True, show_figs=False,
-                 parallel=False, verbose=True):
+                 plot_spectra=False, plot_abun=True, show_figs=False):
 
-        self.inputs = class_input(event=event, case=case, StoN=StoN,
-                                  run_uncertainties=run_uncertainties)
+        self.inputs = class_input(
+          event=event, case=case, StoN=StoN, custom_par=custom_par,
+          run_uncertainties=run_uncertainties)
 
         self.flag_run_simulation = flag_run_simulation
         self.flag_compute_features = flag_compute_features
@@ -30,23 +32,20 @@ class Master(object):
         self.plot_spectra = plot_spectra
         self.plot_abun = plot_abun
         self.show_figs = show_figs
-        self.parallel = parallel
-        self.verbose = verbose
         self.created_ymlfiles_list = None
 
-        if self.verbose:        
-            os.system('clear')
-            print '****************************************************'
-            print '***************** TARDIS SIMULATION ****************'         
-            print '****************************************************'
-            print '\n'
-            
-            print 'RUN SIMULATIONS------->', self.flag_run_simulation
-            print 'COMPUTE FEATURES------>', self.flag_compute_features
-            print 'MAKE KROMER PLOT------>', self.make_kromer
-            print 'PLOT SPECTRA----->', self.plot_spectra
-            print 'SHOW FIGURES----->', self.show_figs
-            print '\n\n'
+        os.system('clear')
+        print '****************************************************'
+        print '***************** TARDIS SIMULATION ****************'         
+        print '****************************************************'
+        print '\n'
+        
+        print 'RUN SIMULATIONS------->', self.flag_run_simulation
+        print 'COMPUTE FEATURES------>', self.flag_compute_features
+        print 'MAKE KROMER PLOT------>', self.make_kromer
+        print 'PLOT SPECTRA----->', self.plot_spectra
+        print 'SHOW FIGURES----->', self.show_figs
+        print '\n\n'
 
         #self.run_master()
 
@@ -58,9 +57,9 @@ class Master(object):
             os.mkdir(output_dir)                        
 
         #Make a sub-dir and a .yml file for each simulation.
-        object_make_yml = Make_Inputs(self.inputs, self.plot_abun, self.verbose)                 
+        object_make_yml = Make_Inputs(self.inputs, self.plot_abun)                 
         self.created_ymlfiles_list = object_make_yml.run()
-
+                
         if self.flag_run_simulation:
             """Run sequential TARDIS simulations."""
             module_tardis_sim = Simulate_Spectra(
@@ -70,7 +69,6 @@ class Master(object):
               smoothing_window=self.inputs.smoothing_window,
               N_MC_runs=self.inputs.N_MC_runs,
               extinction = self.inputs.extinction,
-              parallel = self.parallel,
               show_figs=self.show_figs)
               
             module_tardis_sim.run_SIM()
@@ -91,78 +89,76 @@ if __name__ == '__main__':
 
     """Tests"""
 
-    Master(event='11fe', case='default', StoN='low',
-           flag_run_simulation=True, flag_compute_features=True,
-           run_uncertainties=False, make_kromer=False,
-           plot_spectra=False, plot_abun=False, show_figs=False, parallel=False,
-           verbose=True).run_master()
+    for t in t_11fe[0:-2]:
+        Master(event='11fe', case='C-scan', StoN='very-low', custom_par=t,
+               flag_run_simulation=True, flag_compute_features=True,
+               run_uncertainties=True, make_kromer=False, plot_spectra=False,
+               plot_abun=False, show_figs=False).run_master() 
 
-    #Master(event='11fe', case='6d_Z-scaled_v19590', StoN='medium-high',
+    #Master(event='fast', case='single', StoN='low',
+    #       flag_run_simulation=True, flag_compute_features=False,
+    #       run_uncertainties=False, make_kromer=False,
+    #       plot_spectra=False, plot_abun=False, show_figs=False, parallel=False,
+    #       verbose=True).run_master()   
+
+    #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    #Master(event='11fe', case='ddet_C-prof', StoN='super-high',
     #       flag_run_simulation=True, flag_compute_features=True,
-    #       run_uncertainties=True, make_kromer=False,
-    #       plot_spectra=True, plot_abun=False, show_figs=False, parallel=False,
-    #       verbose=True).run_master()  
+    #       run_uncertainties=False, make_kromer=False,
+    #       plot_spectra=False, plot_abun=True, show_figs=False, parallel=False,
+    #       verbose=True).run_master()           
 
-    #Master(event='11fe', case='12d_C-scan_grid', StoN='medium-high',
+
+    #Master(event='11fe', case='best_hot', StoN='super-high',
     #       flag_run_simulation=True, flag_compute_features=True,
     #       run_uncertainties=True, make_kromer=False,
     #       plot_spectra=True, plot_abun=True, show_figs=False, parallel=False,
-    #       verbose=True).run_master()  
+    #       verbose=True).run_master()   
 
-    #Master(event='fast', case='single', StoN='low',
-    #       flag_run_simulation=True, flag_compute_features=True,
-    #       run_uncertainties=False, make_kromer=False,
-    #       plot_spectra=False, show_figs=False, parallel=False,
-    #       verbose=True).run_master()  
-
-    #Master(event='11fe', case='test_5.9d', StoN='low',
-    #       flag_run_simulation=False, flag_compute_features=False,
-    #       run_uncertainties=False, make_kromer=False,
-    #       plot_spectra=False, plot_abun=True,
-    #       show_figs=True, parallel=False,
-    #       verbose=True).run_master()  
-
-
-
-    #Master(event='05bl', case='12d_C-scaled_v0', StoN='low',
-    #       flag_run_simulation=True, flag_compute_features=True,
-    #       run_uncertainties=True, make_kromer=True,
-    #       plot_spectra=True, show_figs=False, parallel=False,
-    #       verbose=True).run_master() 
-
-    #Master(event='05bl', case='12d_2D-grid_v0', StoN='low',
-    #       flag_run_simulation=True, flag_compute_features=True,
-    #       run_uncertainties=True, make_kromer=True,
-    #       plot_spectra=True, show_figs=False, parallel=False,
-    #       verbose=True).run_master()  
-
-
-
-
-
-    #Master(event='11fe', case='12d_2D-grid_v13400', StoN='low',
+    #Master(event='11fe', case='best_delta', StoN='super-high',
     #       flag_run_simulation=True, flag_compute_features=True,
     #       run_uncertainties=True, make_kromer=False,
-    #       plot_spectra=True, show_figs=False, parallel=False,
-    #       verbose=True).run_master()  
+    #       plot_spectra=True, plot_abun=True, show_figs=False, parallel=False,
+    #       verbose=True).run_master()   
+
+    #Master(event='11fe', case='default', StoN='super-high',
+    #       flag_run_simulation=True, flag_compute_features=True,
+    #       run_uncertainties=True, make_kromer=False,
+    #       plot_spectra=True, plot_abun=True, show_figs=False, parallel=False,
+    #       verbose=True).run_master()              
 
 
+    #for t in ['16', '19', '12']:
+    #    Master(event='11fe', case=t + 'd_C-scan', StoN='super-high',
+    #           flag_run_simulation=True, flag_compute_features=True,
+    #           run_uncertainties=False, make_kromer=False,
+    #           plot_spectra=False, plot_abun=True, show_figs=False, parallel=False,
+    #           verbose=True).run_master()         
 
+    #for t in ['6', '9', '12', '16', '19']:
+    #    Master(event='11fe', case=t + 'd_C-plateaus_scaling', StoN='super-high',
+    #           flag_run_simulation=True, flag_compute_features=True,
+    #           run_uncertainties=True, make_kromer=False,
+    #           plot_spectra=True, plot_abun=True, show_figs=False, parallel=False,
+    #           verbose=True).run_master()    
 
+    #for t in ['16', '19', '12']:
+    #    Master(event='11fe', case=t + 'd_C-best', StoN='super-high',
+    #           flag_run_simulation=True, flag_compute_features=True,
+    #           run_uncertainties=True, make_kromer=False,
+    #           plot_spectra=True, plot_abun=True, show_figs=False, parallel=False,
+    #           verbose=True).run_master()   
+           
 
-    #Master(event='05bl', case='test', StoN='low',
-    #       flag_run_simulation=True, flag_compute_features=False,
-    #       run_uncertainties=False, make_kromer=False,
-    #       plot_spectra=False, show_figs=True, parallel=False,
-    #       verbose=True).run_master() 
-
-
-    
+    #=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+        
     """Runs used in the 11fe-05bl paper"""
-    #Master(event='11fe', case='default_L-scaled', StoN='high', flag_run_simulation=False,
-    #        flag_compute_features=True, run_uncertainties=True, make_kromer=False,
-    #       plot_spectra=False, show_figs=False, parallel=True,
-    #       verbose=False).run_master()         
+    #Master(event='11fe', case='default_L-scaled', StoN='high',
+    #       flag_run_simulation=True, flag_compute_features=True,
+    #       run_uncertainties=True, make_kromer=False,
+    #       plot_spectra=True, plot_abun=True, show_figs=False, parallel=False,
+    #       verbose=True).run_master()
 
     #Master(event='11fe', case='L-grid', StoN='high', flag_run_simulation=False,
     #       flag_compute_features=True, run_uncertainties=True, make_kromer=False,

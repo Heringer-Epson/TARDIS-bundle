@@ -15,29 +15,21 @@ class Make_Inputs(object):
     """
     Code Description
     ----------
-
     THIS CODE MAKES A SERIES OF YML FILES ACCORDING TO THE INPUT
     PARAMETERS PROVIDED HERE.
-
     THE NON-DEFAULT INPUT PARAMETERS *MUST* BE PASSED AS LISTS, EVEN IF
     THE LIST CONTAINS A SINGLE ELEMENT. EXCEPTIONS TO THIS ARE THE
     PARAMETERS THAT DO *NOT* BELONG TO THE MASTER DICTIONARY.
-
     THE CODE WILL LOOP THROUGH ALL THE INPUT LISTS.
     ONE YML FILE IS CREATED PER INPUT COMBINATION.
-
     Output
     ------
-
     run_SIM:
         One .yml file per combination of parameters.
-
     Returns
     -------
-
     created_ymlfiles_list:
         List contaning the string of the created .yml files.
-
     Notes
     -----
     1)  The atomic data used should be 'kurucz_cd23_chianti_H_He.h5'.
@@ -45,34 +37,9 @@ class Make_Inputs(object):
         GitHub and should be taken from the tardis_example.
     """
 
-    '''
-    def __init__(self,
-      write_files=True, pars_fname=None, log_lum='9.4472',
-      time_explosion='19',
-      distance='0', atomic_data='kurucz_cd23_chianti_H_He.h5',
-      structure_type='specific', filename_structure='None',
-      velocity_start='1.1e+4', velocity_stop='2.0e+4',
-      velocity_array=None, density_array = None, structure_num='20',
-      density_type='branch85_w7', time_0=None, rho_0='6.e-10',
-      abundance_dict = None,
-      v_0='3000.', exponent='1.0', density_value='1.e-40',
-      abundance_type='uniform', abun_O='0.00', abun_C='0.00',
-      abun_Na='0.00', abun_Mg='0.00', abun_Si='0.00', abun_S='0.00',
-      abun_Ar='0.00', abun_Ca='0.00', abun_Ti='0.00', abun_Fe='0.00',
-      abun_Co='0.00', abun_Ni='0.00', energy_scaling='1.',
-      mass_scaling='1', TiCr_scaling='1.00', Fe_scaling='1.00',
-      ionization='nebular', excitation='dilute-lte',
-      rad_rates_type='dilute-blackbody', line_interaction='macroatom',
-      seed='23111963', num_packs='2.0e+5', iterations='20',
-      last_num_packs='5.0e+5', num_virtual_packs='5', spec_start='500',
-      spec_stop='20000', spec_num='10000', folder_name=False,
-      copy_this_code=True, subdir_safety=False, clean_subdir=True,
-      verbose=True):
-      '''
-    def __init__(self, inputs, plot_abun, verbose):
+    def __init__(self, inputs, plot_abun):
           
         self.plot_abun = plot_abun
-        self.verbose = verbose
 
         self.event = inputs.event
         self.atomic_data = inputs.atomic_data
@@ -89,7 +56,6 @@ class Make_Inputs(object):
         self.subdir = inputs.subdir
 
         self.ionization = inputs.ionization
-        self.excitation = inputs.excitation
         self.rad_rates_type = inputs.rad_rates_type
         
         self.elements = inputs.elements
@@ -104,12 +70,17 @@ class Make_Inputs(object):
         self.MASTER['velocity_start'] = inputs.velocity_start
         self.MASTER['velocity_stop'] = inputs.velocity_stop
         self.MASTER['structure_num'] = inputs.structure_num
+        self.MASTER['delta'] = inputs.delta
 
         #Up to two elements whose mass fraction will be be scaled/added in
         #a region of the ejecta.
+        self.el_setting = inputs.el_setting
         self.el1_scaling = inputs.el1_scaling
         self.el2_scaling = inputs.el2_scaling
         self.el_adding = inputs.el_adding
+        self.MASTER[self.el_setting['el'] + '-S'] = inputs.el_setting['set_value']
+        self.MASTER['v_start_S'] = inputs.el_setting['v_start']
+        self.MASTER['v_stop_S'] = inputs.el_setting['v_stop']
         self.MASTER[self.el1_scaling['el'] + '-F1'] = inputs.el1_scaling['factors']
         self.MASTER['v_start_F1'] = inputs.el1_scaling['v_start']
         self.MASTER['v_stop_F1'] = inputs.el1_scaling['v_stop']
@@ -132,6 +103,8 @@ class Make_Inputs(object):
         self.MASTER['num_virtual_packs'] = inputs.num_virtual_packs
         
         self.MASTER['line_interaction'] = inputs.line_interaction
+        self.MASTER['excitation'] = inputs.excitation
+        self.MASTER['nlte'] = inputs.ntle
         
         self.default_pars = []
         self.num_files = 1
@@ -143,11 +116,10 @@ class Make_Inputs(object):
         self.abun_fpath = None
         
     def print_run_start(self):
-        if self.verbose:
-            print '----------------------------------------------------'
-            print '--------------- Making .yml files ------------------'
-            print '----------------------------------------------------'
-            print '\n'
+        print '----------------------------------------------------'
+        print '--------------- Making .yml files ------------------'
+        print '----------------------------------------------------'
+        print '\n'
         
     def collect_non_default_pars(self):
         """ Organise variables so that .yml files are created according
@@ -163,13 +135,12 @@ class Make_Inputs(object):
                           +'list nor a string.')   
         self.num_files = len(self.MASTER[self.non_default_pars[0]])
                           
-        if self.verbose:
-            print 'INPUT PARAMETERS (non-default):'
-            for key in self.non_default_pars:
-                print '    '+key+':', self.MASTER[key]
-            print '\nSTATUS:'   
-            print ('    '+str(self.num_files)+' .yml files will be created at '
-                   + self.subdir_fullpath + '\n') 
+        print 'INPUT PARAMETERS (non-default):'
+        for key in self.non_default_pars:
+            print '    '+key+':', self.MASTER[key]
+        print '\nSTATUS:'   
+        print ('    '+str(self.num_files)+' .yml files will be created at '
+               + self.subdir_fullpath + '\n') 
 
     def make_outfolder(self):
         """Set outfolder name."""
@@ -221,30 +192,70 @@ class Make_Inputs(object):
         #based on digitalizing the published figures 3 and 10 in
         #http://adsabs.harvard.edu/abs/2014MNRAS.439.1959M        
         if event == '05bl':
-            sys.exit('05bl is currently disabled. Need uptade for auto Ni56.')
-            #read_every = 2
-            #t_exp2str = {'11.0': 'm6', '12.0': 'm5', '14.0': 'm3', '21.8': 'p48',
-            #             '29.9': 'p129'}                
-            #phase = t_exp2str[time]
-            #fpath = ('./../INPUT_FILES/Hachinger_2005bl/models-05bl-w7e0.7/' 
-            #         + 'SN2005bl_' + phase + '/' + 'abuplot.dat')
-            #self.time_0 = str(float(time) * 24. * 3600.) + ' s'
+            read_every = 2
+            t_exp2str = {'11.0': 'm6', '12.0': 'm5', '14.0': 'm3', '21.8': 'p48',
+                         '29.9': 'p129'}                
+            phase = t_exp2str[time]
+            fpath = ('./../INPUT_FILES/Hachinger_2005bl/models-05bl-w7e0.7/' 
+                     + 'SN2005bl_' + phase + '/' + 'abuplot.dat')
+            self.time_0 = str(float(time) * 24. * 3600.) + ' s'
                 
-        if event == '11fe':
+        elif event == '11fe':
             read_every = 1 
             fpath = ('./../INPUT_FILES/Mazzali_2011fe/ejecta_layers.dat')                   
         
+        rows = []
+        with open(fpath, 'r') as inp:
+            for line in itertools.islice(inp, 2, None, read_every):
+                column = line.rstrip('\n').split(' ') 
+                column = filter(None, column)
+                rows.append(column)               
+
+        #Extract velocity, density and abundances.
+        velocity_array = np.asarray([float(row[1]) for row in rows])
+        density_array = np.asarray([10.**float(row[3]) for row in rows])
+                
+        #Get abundances.
         abun = {} 
         
-        velocity_array, density_array = np.loadtxt(
-          fpath, skiprows=2, usecols=(1, 3), unpack=True)
-        density_array = 10. ** density_array        
+        for el in self.elements:
+            abun[el] = np.zeros(len(velocity_array))
         
-        for i, el in enumerate(self.elements):
-            abun[el] = np.loadtxt(fpath, skiprows=2, usecols=(4 + i,),
-                                  unpack=True)
-        
+        for i, velocity in enumerate(velocity_array):
+            sum_elem = 0.               
+            for j, el in enumerate(self.elements):
+                
+                abun_value = float(rows[i][4 + j])
+                abun[el][i] = abun_value
+                sum_elem += abun_value
+
         return velocity_array, density_array, abun
+
+    def set_abun(self, inp_abun, el_setting, set_value, v_start, v_stop):
+
+        element = el_setting['el']
+        #Make independent copy of the abun dictionary to prevent differentt_exp
+        #from modifying an already modified (decayed, or scaled) abundundaces. 
+        abun = copy.deepcopy(inp_abun)
+    
+        if element != 'None':
+            shells = np.arange(0, len(self.velocity_array), 1)
+            condition = ((self.velocity_array >= v_start)
+                         & (self.velocity_array <= v_stop))
+            shell_window = shells[condition]
+            
+            for i in shell_window:
+                abundance_all = np.asarray([abun[el][i] for el in self.elements])
+                abundance_all = np.nan_to_num(abundance_all)
+                el_most = self.elements[abundance_all.argmax()]
+                orig_abun = float(abun[element][i])
+                new_abun = set_value
+                                                
+                #Update abundances.
+                abun[element][i] = str(new_abun)            
+                abun[el_most][i] = str(float(abun[el_most][i]) + (orig_abun - new_abun))        
+
+        return abun   
 
     def scale_abun(self, inp_abun, el_scaling, scale, v_start, v_stop):
         
@@ -326,25 +337,86 @@ class Make_Inputs(object):
                 abun[el_most][i] = str(float(abun[el_most][i]) + (orig_abun - new_abun))        
 
         return abun            
+        
+    def compute_Ni_decay(self, inp_abun, time):
+        
+        #Make independent copy of the abun dictionary to prevent differentt_exp
+        #from modifying an already modified (decayed, or scaled) abundundaces. 
+        abun = copy.deepcopy(inp_abun)
+                
+        def decay_Ni_Co_Fe(time, Ni_formed):
+            """Calculates the decay chain Ni->Co->Fe.
+            
+            Source: Nadyozhin+ 1994
+            http://adsabs.harvard.edu/full/1994ApJS...92..527N
+            
+            Remarks: Difference between halflife and lifetime: the 
+            former is the intuitive (1/2)^(t/Tau), while lifetime uses
+            the exponential form. The correlation between constants
+            is T_exp = T_1/2 *(1/ln(2))
+            
+            Values: Half-lifes are taken from Jonghwa Chang's
+            (Korea Atomic Energy Research Institute)
+            http://atom.kaeri.re.kr/nuchart/
+            """
+           
+            Ni_half_life = 6.07/np.log(2.)
+            Co_half_life = 77.24/np.log(2.)
+           
+            Ni_remain = Ni_formed*np.exp(-time/Ni_half_life) 
+             
+            Co_remain = Ni_formed*(Co_half_life/(Co_half_life
+            - Ni_half_life))*(np.exp(-time/Co_half_life)
+            - np.exp(-time/Ni_half_life))
+            
+            Fe_remain = Ni_formed*(1. + Ni_half_life/(Co_half_life
+            - Ni_half_life)*np.exp(-time/Ni_half_life)
+            - Co_half_life/(Co_half_life - Ni_half_life)
+            *np.exp(-time/Co_half_life))
+            
+            Ni_change = Ni_remain - Ni_formed
+            Co_change = Co_remain
+            Fe_change = Fe_remain
+                        
+            """Round numbers to write the abundance file"""
+            Ni_change = float(format(Ni_change, '.6f'))
+            Co_change = float(format(Co_change, '.6f'))
+            Fe_change = float(format(Fe_change, '.6f'))           
+            
+            if abs(Ni_change + Co_change + Fe_change) > 1.e-5:
+                #Test if rounded decay products sum to initial Ni_formed
+                Ni_change -= Ni_change + Co_change + Fe_change
+            
+            return Ni_change, Co_change, Fe_change
 
-    def make_structure_file(self, fpath, velocity_array, density_array, abun):
+        #for i, velocity in enumerate(self.velocity_array):
+        for i in range(len(abun['Si'])):
+            
+            """Compute changes due to decay of Ni and Co."""     
+            Ni_initial = float(abun['Ni0'][i])
+            Ni_change, Co_change, Fe_change = decay_Ni_Co_Fe(
+                                            float(time),Ni_initial)
 
-        N_shells = len(abun['H'])
-        header1 = 't0: ' + self.time_0
-        header2 = 'index velocity density'
-        header3 = '1 km/s g/cm^3'
-        for el in self.elements:
-            header2 += ' ' + el  
-            header3 += ' 1'  
+            abun['Ni'][i] = str(format(float(abun['Ni0'][i])
+            + Ni_change, '.6f'))  
+            
+            #Note that all of the Cobalt is from the decay of Ni and therefore
+            #values passed in abun[Co] are always ignored. 
+            abun['Co'][i] = str(format(Co_change, '.6f'))  
+            
+            abun['Fe'][i] = str(format(float(abun['Fe0'][i])
+            + Fe_change, '.6f'))  
 
-        with open(fpath, 'w') as out_structure:         
-            out_structure.write(header1 + ' \n')
-            out_structure.write(header2 + ' \n')
-            out_structure.write(header3)
-            for i, (v, d) in enumerate(zip(velocity_array, density_array)):
-                out_structure.write('\n' + str(i) + ' ' + str(v) + ' ' + str(d))                 
-                for el in self.elements:
-                    out_structure.write(' ' + str(abun[el][i]))
+            """Test if abundances add up to 1 in each layer."""
+            sum_elem = 0.    
+            for element in self.elements[:-2]:
+                sum_elem += float(abun[element][i])
+            if abs(sum_elem - 1.) > 1.e-5:
+                raise ValueError("Error: In index %s,\
+                the abundance does not add to 1. Needs %s"
+                % (i, 1-sum_elem))
+
+        return abun
 
     def make_density_file(self, fpath, velocity_array, density_array):
         with open(fpath, 'w') as out_density:
@@ -359,9 +431,9 @@ class Make_Inputs(object):
             N_shells = len(abun['H'])
             for i in range(N_shells):
                 out_abundance.write('\n' + str(i))
-                for el in self.elements:
+                for el in self.elements[:-2]:
                     out_abundance.write(' ' + str(abun[el][i]))
-                    
+
     def make_abundance_plot(self, fpath_plot, vel, inp_abun):
         
         abun = copy.deepcopy(inp_abun)
@@ -402,6 +474,7 @@ class Make_Inputs(object):
         plt.close()
                                     
     def control_structure_files(self, spawn_dir, t_exp,
+                                set_value, v_start_S, v_stop_S,
                                 scale_F1, v_start_F1, v_stop_F1,
                                 scale_F2, v_start_F2, v_stop_F2,
                                 parcel_A, v_start_A, v_stop_A):
@@ -413,7 +486,6 @@ class Make_Inputs(object):
 
         self.dens_fpath = spawn_dir + 'density_' + t_exp + '_day.dat'
         self.abun_fpath = spawn_dir + 'abundance_' + t_exp + '_day.dat'
-        #self.model_fpath = spawn_dir + 'model_' + t_exp + '_day.dat'
         abun_plot_fpath = spawn_dir + 'abundance.png'
             
         if self.structure_type == 'file' and self.abundance_type == 'file':
@@ -424,8 +496,12 @@ class Make_Inputs(object):
         else:
             flag_make_structure = False
                                     
+        #Call routine to add the mass fraction of elements.
+        abun_up0 = self.set_abun(self.abun, self.el_setting,
+                                 set_value, v_start_S, v_stop_S)        
+        
         #Call routine to scale the mass fraction of elements.
-        abun_up1 = self.scale_abun(self.abun, self.el1_scaling,
+        abun_up1 = self.scale_abun(abun_up0, self.el1_scaling,
                                    scale_F1, v_start_F1, v_stop_F1)
         abun_up2 = self.scale_abun(abun_up1, self.el2_scaling,
                                    scale_F2, v_start_F2, v_stop_F2)
@@ -433,17 +509,18 @@ class Make_Inputs(object):
         #Call routine to add the mass fraction of elements.
         abun_up3 = self.add_abun(abun_up2, self.el_adding,
                                  parcel_A, v_start_A, v_stop_A)
+        
+        #Call routine to compute the decay of 56Ni.
+        abun_decayed = self.compute_Ni_decay(abun_up3, t_exp)
             
         #If necessary, write abundance and density files and make abun plot.
         if self.structure_type == 'file' and self.abundance_type == 'file':                
             self.make_density_file(self.dens_fpath, self.velocity_array,
                                    self.density_array)
-            self.make_abundance_file(self.abun_fpath, abun_up3)            
-            #self.make_structure_file(self.model_fpath, self.velocity_array,
-            #                         self.density_array, abun_up3)
+            self.make_abundance_file(self.abun_fpath, abun_decayed)
             if self.plot_abun:
                 self.make_abundance_plot(abun_plot_fpath, self.velocity_array,
-                                         abun_up3)    
+                                         abun_decayed)    
     
     def write_yml(self):
         """ Main function to write the output .yml files."""
@@ -468,6 +545,8 @@ class Make_Inputs(object):
                 os.mkdir(spawn_dir)
             self.control_structure_files(
               spawn_dir, PARS['time_explosion'],
+              float(PARS[self.el_setting['el'] + '-S']),
+              float(PARS['v_start_S']), float(PARS['v_stop_S']),
               float(PARS[self.el1_scaling['el'] + '-F1']),
               float(PARS['v_start_F1']), float(PARS['v_stop_F1']),
               float(PARS[self.el2_scaling['el'] + '-F2']),
@@ -475,8 +554,7 @@ class Make_Inputs(object):
               float(PARS[self.el_adding['el'] + '-A']),
               float(PARS['v_start_A']), float(PARS['v_stop_A']))
 
-            if self.verbose:
-                print '    CREATED: ' + ymlfile_fullpath
+            print '    CREATED: ' + ymlfile_fullpath
 
             with open(ymlfile_fullpath  ,'w') as yml_file:
                 yml_file.write('tardis_config_version: v1.0\n')
@@ -511,7 +589,7 @@ class Make_Inputs(object):
                                    + self.density_type + '\n')
                     
                     if self.density_type == 'exponential':
-                        yml_file.write('            time_0:  '
+                        yml_file.write('            time_0: '
                                        +PARS['time_0']+' day\n')
                         yml_file.write('            rho_0: '
                                        +PARS['rho_0']+' g/cm^3\n')
@@ -542,11 +620,16 @@ class Make_Inputs(object):
                 yml_file.write('\n')
                 yml_file.write('plasma:\n')
                 yml_file.write('    ionization: ' + self.ionization + '\n')
-                yml_file.write('    excitation: ' + self.excitation + '\n')
+                yml_file.write('    excitation: ' + PARS['excitation'] + '\n')
                 yml_file.write('    radiative_rates_type: '
                                + self.rad_rates_type + '\n')
                 yml_file.write('    line_interaction_type: '
                                + PARS['line_interaction'] + '\n')
+                if PARS['delta'] != 'Default':
+                    yml_file.write('    delta_treatment: ' + PARS['delta'] + '\n')
+                if PARS['nlte'] != '':
+                    yml_file.write('    nlte:\n')
+                    yml_file.write('        species : ' + str(PARS['nlte']) + '\n')
                 yml_file.write('\n')
                 yml_file.write('montecarlo:\n')
                 yml_file.write('    seed: '+PARS['seed']+'\n')
@@ -562,8 +645,7 @@ class Make_Inputs(object):
                 yml_file.write('    stop: ' + self.spec_stop + ' angstrom\n')
                 yml_file.write('    num: ' + self.spec_num)                          
             
-        if self.verbose:
-            print '\n*** DONE - SUCCESSFUL RUN\n\n'
+        print '\n*** DONE - SUCCESSFUL RUN\n\n'
                 
     def run(self):
         self.print_run_start()
